@@ -23,6 +23,7 @@
       width: 100vw;
       height: 100vh;
       overflow: hidden;
+  padding: 0;
     }
     .wrap {
       width: 100vw;
@@ -171,8 +172,9 @@
     </div>
   </div>
 
-  <audio id="sndStart" src="c.mp3" preload="auto"></audio>
-  <audio id="sndClear" src="a.mp3" preload="auto"></audio>
+  <audio id="sndStart" src="s.mp3" preload="auto"></audio>
+  <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
+<audio id="bgm" src="bgm.mp3" preload="auto" loop></audio>
 
   <script>
   // Config
@@ -306,6 +308,9 @@
 
   // Start game
   function startGame() {
+    bgm.currentTime = 0;
+  bgm.volume = 0.2;
+  bgm.play().catch(() => {});
     board = generateBoard();
     score = 0;
     timeLeft = GAME_TIME;
