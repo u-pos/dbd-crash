@@ -5,12 +5,11 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
   <title>Match-3 Mobile Swipe</title>
   <style>
-:root {
-  --cols: 8;
-  --rows: 8;
-  --tile-size: calc((100vw - 4px * 7 - 12px) / 8); /* gap: 4px × (cols-1), padding: 6px × 2 */
-}
-
+    :root {
+      --cols:8;
+      --rows:8;
+      --tile-size:11vw; /* 画面幅基準に拡大 */
+    }
     html, body {
       margin: 0;
       padding: 0;
@@ -26,26 +25,23 @@
       height: 100vh;
     }
     /* wrap を flex 中央寄せにして左右バランス修正 */
-   .wrap {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  width: 100%;
-}
-
-.ui {
-  margin: 0 auto;
-  max-width: 100vw;
-  width: 100vw; /* 追記 */
-}
-
-.board {
-  width: 100%;
-  max-width: 100vw;
-  box-sizing: border-box;
-  margin: 0 auto; /* 追記 */
-}
-
+    .wrap {
+      width: 100%;
+      max-width: 100%;
+      height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0;
+      box-sizing: border-box;
+    }
+    .ui {
+      width: calc(var(--cols) * var(--tile-size));
+      max-width: 100vw;
+      user-select:none;
+      position: relative;
+      margin: 0 auto;
+    }
     .header {
       display: flex;
       justify-content: space-between;
@@ -69,7 +65,19 @@
       font-size: 4.4vw;
       user-select:none;
     }
-  
+    .board {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+      padding: 6px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--tile-size));
+      gap: 4px;
+      touch-action: none;
+      user-select:none;
+      user-drag:none;
+      box-sizing: border-box;
+      width: 100%;
+    }
     .cell {
       width: var(--tile-size);
       height: var(--tile-size);
@@ -214,10 +222,6 @@
       <tr>
         <td style="border-bottom: 1px solid #555; padding: 0.5rem;">⋮</td>
         <td style="border-bottom: 1px solid #555; padding: 0.5rem;">⋮</td>
-      </tr>
-      <tr>
-        <td style="border-bottom: 1px solid #555; padding: 0.5rem;">10連鎖目</td>
-        <td style="border-bottom: 1px solid #555; padding: 0.5rem;">得点×10倍</td>
       </tr>
     </tbody>
   </table>
