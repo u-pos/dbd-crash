@@ -5,11 +5,13 @@
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
   <title>Match-3 Mobile Swipe</title>
   <style>
-    :root {
-      --cols:8;
-      --rows:8;
-      --tile-size:11vw; /* 画面幅基準に拡大 */
-    }
+ :root {
+  --cols: 8;
+  --rows: 8;
+  /* gap:4pxが7回、padding:6pxが左右で合計12px */
+  --tile-size: calc((100vw - (4px * 7) - 12px) / 8);
+}
+
     html, body {
 　　　position: fixed; width: 100vw; height: 100vh; overflow: hidden; 
       margin: 0;
