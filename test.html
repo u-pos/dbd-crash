@@ -589,6 +589,32 @@
       // Play clear sound on each chain
       sndClear.currentTime = 0;
       sndClear.play();
+const pauseBtn = document.getElementById('pauseBtn');
+const pauseOverlay = document.getElementById('pauseOverlay');
+const resumeBtn = document.getElementById('resumeBtn');
+
+pauseBtn.addEventListener('click', () => {
+  if (!running) return;
+  clearInterval(timerId);
+  running = false;
+  bgm.pause();
+  pauseOverlay.style.display = 'flex'; // 真っ黒オーバーレイ表示
+});
+
+resumeBtn.addEventListener('click', () => {
+  running = true;
+  pauseOverlay.style.display = 'none';
+  bgm.play().catch(()=>{});
+  timerId = setInterval(() => {
+    timeLeft--;
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      running = false;
+      showGameOver();
+    }
+    updateUI();
+  }, 1000);
+});
 
       // Score calculation: group matches and multiply by chain number capped at 10
       const groups = groupMatches(board, matches);
