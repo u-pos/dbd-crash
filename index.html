@@ -174,7 +174,7 @@
 
   <audio id="sndStart" src="s.mp3" preload="auto"></audio>
   <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
-<audio id="bgm" src="bgm.mp3" preload="auto" loop></audio>
+<audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
   <script>
   // Config
@@ -309,7 +309,6 @@
   // Start game
   function startGame() {
     bgm.currentTime = 0;
-  bgm.volume = 0.2;
   bgm.play().catch(() => {});
     board = generateBoard();
     score = 0;
@@ -343,6 +342,7 @@
   }
 
   function showGameOver() {
+    bgm.pause();
     gameOverOverlay.style.display = 'flex';
     gameOverOverlay.innerHTML = `
       <div>最終スコア</div>
