@@ -1,33 +1,139 @@
-
 <!doctype html>
 <html lang="ja">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-  <title>Match-3 Mobile</title>
+  <title>Match-3 Mobile Swipe</title>
   <style>
-    :root{--cols:8;--rows:8;--tile-size:9.5vmin}
-    html,body{height:100%;margin:0;background:linear-gradient(180deg,#0f172a,#0b1220);font-family:system-ui,-apple-system,Segoe UI,Roboto,'Hiragino Kaku Gothic ProN',Meiryo,sans-serif;color:#fff}
-    .wrap{min-height:100%;display:flex;align-items:center;justify-content:center;padding:4vmin}
-    .ui{width:calc(var(--cols)*var(--tile-size) + 3vmin);max-width:96vw}
-    .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:3vmin}
-    .panel{background:rgba(255,255,255,0.04);padding:2vmin;border-radius:12px}
-    .board{background:linear-gradient(180deg, rgba(255,255,255,0.03), transparent);padding:6px;border-radius:10px;display:grid;grid-template-columns:repeat(var(--cols), var(--tile-size));gap:4px}
-    .cell{width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;position:relative;touch-action:none}
-    .cell img{width:100%;height:100%;object-fit:cover;display:block;user-select:none}
-    .start-overlay{position:absolute;inset:0;display:flex;align-items:center;justify-content:center}
-    .start-btn{background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;padding:12px 22px;border-radius:999px;font-size:1.6rem;color:#fff;box-shadow:0 8px 30px rgba(123,97,255,0.25)}
-    .selected{outline:3px solid rgba(255,255,255,0.18);transform:scale(1.04)}
-    .pop{animation:pop .45s cubic-bezier(.2,.9,.3,1)}
-    @keyframes pop{0%{transform:scale(1)}50%{transform:scale(1.25);filter:brightness(1.25)}100%{transform:scale(1);filter:brightness(1)}}
-    .fade-out{animation:fadeout .38s forwards}
-    @keyframes fadeout{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(0.3)}}
-    .floating{transition:transform 420ms cubic-bezier(.2,.8,.3,1)}
-    .scorebox{font-weight:700}
-    .small{font-size:0.85rem;opacity:0.9}
-    .footer{margin-top:2vmin;text-align:center;opacity:0.85}
-    /* make large tappable area on mobile */
-    button{touch-action:manipulation}
+    :root {
+      --cols:8;
+      --rows:8;
+      --tile-size:9.5vmin;
+    }
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: linear-gradient(180deg,#0f172a,#0b1220);
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, "Hiragino Kaku Gothic ProN", Meiryo, sans-serif;
+      color: #fff;
+      -webkit-tap-highlight-color: transparent;
+      touch-action: none; /* 重要：ピンチズームやスクロール防止 */
+      overscroll-behavior: contain;
+      user-select: none;
+    }
+    .wrap {
+      min-height: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4vmin;
+    }
+    .ui {
+      width: calc(var(--cols)*var(--tile-size) + 3vmin);
+      max-width: 96vw;
+      user-select:none;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 3vmin;
+    }
+    .panel {
+      background: rgba(255,255,255,0.04);
+      padding: 2vmin;
+      border-radius: 12px;
+      user-select:none;
+    }
+    .board {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
+      padding: 6px;
+      border-radius: 10px;
+      display: grid;
+      grid-template-columns: repeat(var(--cols), var(--tile-size));
+      gap: 4px;
+      touch-action: none; /* 重要 */
+    }
+    .cell {
+      width: var(--tile-size);
+      height: var(--tile-size);
+      border-radius: 8px;
+      overflow: hidden;
+      position: relative;
+      user-select:none;
+      -webkit-user-drag:none;
+      touch-action: none;
+      background: #111a2a;
+      box-shadow: inset 0 0 8px rgba(255,255,255,0.05);
+    }
+    .cell img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+      user-select:none;
+      pointer-events:none;
+      -webkit-user-drag:none;
+    }
+    .start-overlay {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      user-select:none;
+      background: rgba(0,0,0,0.3);
+      border-radius: 10px;
+    }
+    .start-btn {
+      background: linear-gradient(90deg,#ff7ab6,#7b61ff);
+      border: none;
+      padding: 12px 22px;
+      border-radius: 999px;
+      font-size: 1.6rem;
+      color: #fff;
+      box-shadow: 0 8px 30px rgba(123,97,255,0.25);
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .selected {
+      outline: 3px solid rgba(255,255,255,0.18);
+      transform: scale(1.04);
+    }
+    .pop {
+      animation: pop .45s cubic-bezier(.2,.9,.3,1);
+    }
+    @keyframes pop {
+      0% {transform: scale(1)}
+      50% {transform: scale(1.25); filter: brightness(1.25)}
+      100% {transform: scale(1); filter: brightness(1)}
+    }
+    .fade-out {
+      animation: fadeout .38s forwards;
+    }
+    @keyframes fadeout {
+      0% {opacity:1; transform: scale(1)}
+      100% {opacity:0; transform: scale(0.3)}
+    }
+    .floating {
+      transition: transform 420ms cubic-bezier(.2,.8,.3,1);
+    }
+    .scorebox {
+      font-weight: 700;
+    }
+    .small {
+      font-size: 0.85rem;
+      opacity: 0.9;
+    }
+    .footer {
+      margin-top: 2vmin;
+      text-align: center;
+      opacity: 0.85;
+      user-select:none;
+    }
+    button {
+      touch-action: manipulation;
+    }
   </style>
 </head>
 <body>
@@ -44,29 +150,32 @@
         <div id="overlay" class="start-overlay"><button id="startBtn" class="start-btn">START</button></div>
       </div>
 
-      <div class="footer small">Match-3, 1 minute high-score. Tap tiles to select and swap adjacent ones. Good luck!</div>
+      <div class="footer small">
+        Match-3, 1 minute high-score. Swipe tiles to swap adjacent ones. Good luck!
+      </div>
     </div>
   </div>
 
   <audio id="sndStart" src="c.mp3" preload="auto"></audio>
-  <audio id="sndSwap" src="c.mp3" preload="auto"></audio>
-  <audio id="sndClear" src="b.mp3" preload="auto"></audio>
+  <audio id="sndClear" src="a.mp3" preload="auto"></audio>
 
   <script>
   // Config
-  const ROWS = 8; const COLS = 8; const TILE_TYPES = 6; const GAME_TIME = 60;
+  const ROWS = 8;
+  const COLS = 8;
+  const TILE_TYPES = 6;
+  const GAME_TIME = 60;
+
   const boardEl = document.getElementById('board');
   const scoreEl = document.getElementById('score');
-  const timeEl  = document.getElementById('time');
+  const timeEl = document.getElementById('time');
   const comboEl = document.getElementById('combo');
   const overlay = document.getElementById('overlay');
   const startBtn = document.getElementById('startBtn');
   const sndStart = document.getElementById('sndStart');
-  const sndSwap  = document.getElementById('sndSwap');
   const sndClear = document.getElementById('sndClear');
 
-  let board = new Array(ROWS*COLS).fill(0);
-  let selected = -1;
+  let board = new Array(ROWS * COLS).fill(0);
   let running = false;
   let score = 0;
   let timeLeft = GAME_TIME;
@@ -74,260 +183,352 @@
   let combo = 1.0;
   let processing = false;
 
-  function idx(r,c){return r*COLS+c}
-  function rc(i){return [Math.floor(i/COLS), i%COLS]}
+  function idx(r, c) { return r * COLS + c }
+  function rc(i) { return [Math.floor(i / COLS), i % COLS] }
+  function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min }
 
-  function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-
-  // generate initial board with no immediate matches
-  function generateBoard(){
-    const b=new Array(ROWS*COLS).fill(0);
-    for(let r=0;r<ROWS;r++){
-      for(let c=0;c<COLS;c++){
-        let attempts=0;
-        while(true){
-          const t = randInt(1,TILE_TYPES);
-          b[idx(r,c)]=t;
-          let bad=false;
-          if(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t) bad=true;
-          if(r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t) bad=true;
-          if(!bad) break;
-          attempts++; if(attempts>30) break;
+  // Generate board with no immediate matches
+  function generateBoard() {
+    const b = new Array(ROWS * COLS).fill(0);
+    for (let r = 0; r < ROWS; r++) {
+      for (let c = 0; c < COLS; c++) {
+        let attempts = 0;
+        while (true) {
+          const t = randInt(1, TILE_TYPES);
+          b[idx(r, c)] = t;
+          let bad = false;
+          if (c >= 2 && b[idx(r, c - 1)] === t && b[idx(r, c - 2)] === t) bad = true;
+          if (r >= 2 && b[idx(r - 1, c)] === t && b[idx(r - 2, c)] === t) bad = true;
+          if (!bad) break;
+          attempts++;
+          if (attempts > 30) break;
         }
       }
     }
     return b;
   }
 
-  function renderBoard(prevBoard){
-    // prevBoard optional for simple falling animation detection
-    boardEl.innerHTML='';
-    for(let i=0;i<board.length;i++){
+  // Render the board, with optional animation if prevBoard given
+  function renderBoard(prevBoard) {
+    boardEl.innerHTML = '';
+    for (let i = 0; i < board.length; i++) {
       const cell = document.createElement('div');
-      cell.className='cell';
-      cell.dataset.i=i;
+      cell.className = 'cell';
+      cell.dataset.i = i;
       const img = document.createElement('img');
-      img.draggable=false;
+      img.draggable = false;
       img.src = `tile${board[i]}.png`;
       cell.appendChild(img);
-      // attach events
-      cell.addEventListener('pointerdown', onTap);
-      // prepare animation: if prevBoard provided and tile came from above -> floating transform
-      if(prevBoard){
-        const prev = prevBoard[i];
-        if(prev !== board[i]){
-          // new tile: start slightly above and drop
-          img.style.transform='translateY(-120%)';
-          img.classList.add('floating');
-          requestAnimationFrame(()=>{
-            img.style.transform='translateY(0)';
-          });
-        }
-      }
       boardEl.appendChild(cell);
     }
   }
 
-  function findMatches(b){
+  // Find matches: return array of indices
+  function findMatches(b) {
     const toClear = new Set();
-    // horizontal
-    for(let r=0;r<ROWS;r++){
-      let runType=null, runStart=0, runLen=0;
-      for(let c=0;c<COLS;c++){
-        const t=b[idx(r,c)];
-        if(t===runType) runLen++; else {
-          if(runType && runLen>=3) for(let k=0;k<runLen;k++) toClear.add(idx(r,runStart+k));
-          runType=t; runStart=c; runLen=1;
+
+    // Horizontal
+    for (let r = 0; r < ROWS; r++) {
+      let runType = null, runStart = 0, runLen = 0;
+      for (let c = 0; c < COLS; c++) {
+        const t = b[idx(r, c)];
+        if (t === runType) runLen++;
+        else {
+          if (runType && runLen >= 3) {
+            for (let k = 0; k < runLen; k++) toClear.add(idx(r, runStart + k));
+          }
+          runType = t;
+          runStart = c;
+          runLen = 1;
         }
       }
-      if(runType && runLen>=3) for(let k=0;k<runLen;k++) toClear.add(idx(r,runStart+k));
+      if (runType && runLen >= 3) {
+        for (let k = 0; k < runLen; k++) toClear.add(idx(r, runStart + k));
+      }
     }
-    // vertical
-    for(let c=0;c<COLS;c++){
-      let runType=null, runStart=0, runLen=0;
-      for(let r=0;r<ROWS;r++){
-        const t=b[idx(r,c)];
-        if(t===runType) runLen++; else {
-          if(runType && runLen>=3) for(let k=0;k<runLen;k++) toClear.add(idx(runStart+k,c));
-          runType=t; runStart=r; runLen=1;
+    // Vertical
+    for (let c = 0; c < COLS; c++) {
+      let runType = null, runStart = 0, runLen = 0;
+      for (let r = 0; r < ROWS; r++) {
+        const t = b[idx(r, c)];
+        if (t === runType) runLen++;
+        else {
+          if (runType && runLen >= 3) {
+            for (let k = 0; k < runLen; k++) toClear.add(idx(runStart + k, c));
+          }
+          runType = t;
+          runStart = r;
+          runLen = 1;
         }
       }
-      if(runType && runLen>=3) for(let k=0;k<runLen;k++) toClear.add(idx(runStart+k,c));
+      if (runType && runLen >= 3) {
+        for (let k = 0; k < runLen; k++) toClear.add(idx(runStart + k, c));
+      }
     }
-    return Array.from(toClear).sort((a,b)=>a-b);
+
+    return Array.from(toClear).sort((a,b) => a-b);
   }
 
-  function collapseBoard(b){
+  // Collapse board and fill top with new tiles
+  function collapseBoard(b) {
     const nb = b.slice();
-    for(let c=0;c<COLS;c++){
-      const col=[];
-      for(let r=0;r<ROWS;r++) if(nb[idx(r,c)]!==0) col.push(nb[idx(r,c)]);
+    for (let c = 0; c < COLS; c++) {
+      const col = [];
+      for (let r = 0; r < ROWS; r++) {
+        const v = nb[idx(r, c)];
+        if (v !== 0) col.push(v);
+      }
       const missing = ROWS - col.length;
-      const newTiles = Array.from({length:missing},()=>randInt(1,TILE_TYPES));
+      const newTiles = Array.from({length: missing}, () => randInt(1, TILE_TYPES));
       const newCol = newTiles.concat(col);
-      for(let r=0;r<ROWS;r++) nb[idx(r,c)] = newCol[r];
+      for(let r=0; r<ROWS; r++) nb[idx(r,c)] = newCol[r];
     }
     return nb;
   }
 
-  // play clear effect visually and sound
-  function playClearVisual(indices){
-    // add fade-out class to matching images
-    indices.forEach(i=>{
-      const cell = boardEl.querySelector(`.cell[data-i='${i}']`);
-      if(cell){
-        const img = cell.querySelector('img');
-        img.classList.add('fade-out');
+  // Swap two indices in board and return new board array
+  function swapTiles(b, i1, i2) {
+    const nb = b.slice();
+    const tmp = nb[i1];
+    nb[i1] = nb[i2];
+    nb[i2] = tmp;
+    return nb;
+  }
+
+  // Scoring points by count of cleared tiles in one match set
+  function scoreForMatch(count) {
+    switch(count) {
+      case 3: return 100;
+      case 4: return 200;
+      case 5: return 300;
+      default: return 0;
+    }
+  }
+
+  // Game state reset and start
+  function startGame() {
+    board = generateBoard();
+    score = 0;
+    timeLeft = GAME_TIME;
+    combo = 1;
+    processing = false;
+    running = true;
+    overlay.style.display = 'none';
+    updateUI();
+    renderBoard();
+    sndStart.currentTime = 0;
+    sndStart.play();
+    timerId = setInterval(() => {
+      timeLeft--;
+      if(timeLeft <= 0) {
+        clearInterval(timerId);
+        running = false;
+        overlay.style.display = 'flex';
+        startBtn.textContent = 'RESTART';
       }
-    });
-    // sound
-    try{ sndClear.currentTime=0; sndClear.play(); }catch(e){}
+      updateUI();
+    }, 1000);
   }
 
-  async function handleSwap(i1,i2){
-    if(processing || !running) return;
-    processing=true;
-    sndSwap.play().catch(()=>{});
-    const newBoard = board.slice();
-    [newBoard[i1], newBoard[i2]] = [newBoard[i2], newBoard[i1]];
-    board = newBoard; renderBoard();
-    // check matches
-    let m = findMatches(board);
-    if(m.length===0){
-      // invalid swap -> swap back
-      await delay(260);
-      [board[i1], board[i2]] = [board[i2], board[i1]];
-      renderBoard();
-      processing=false; return;
+  function updateUI() {
+    scoreEl.textContent = score;
+    timeEl.textContent = timeLeft;
+    comboEl.textContent = 'x' + combo.toFixed(1);
+  }
+
+  // Check if two tiles are adjacent
+  function isAdjacent(i1, i2) {
+    const [r1, c1] = rc(i1);
+    const [r2, c2] = rc(i2);
+    return (Math.abs(r1-r2) + Math.abs(c1-c2)) === 1;
+  }
+
+  // Handle a player move (swap tiles if valid and if it creates matches)
+  async function playerMove(i1, i2) {
+    if(!running || processing) return;
+    if(!isAdjacent(i1, i2)) return;
+    processing = true;
+
+    // Swap and check matches
+    let newBoard = swapTiles(board, i1, i2);
+    let matches = findMatches(newBoard);
+
+    if(matches.length === 0) {
+      // no match - revert swap after short delay
+      renderSwapAnimation(i1, i2, false);
+      await delay(350);
+      processing = false;
+      return;
     }
-    // cascade
-    let chain=0;
-    while(true){
-      m = findMatches(board);
-      if(m.length===0) break;
+
+    renderSwapAnimation(i1, i2, true);
+    board = newBoard;
+
+    // Start chain clearing loop
+    let chain = 0;
+    while(true) {
+      matches = findMatches(board);
+      if(matches.length === 0) break;
       chain++;
-      playClearVisual(m);
-      // scoring
-      const base = m.length * 100;
-      const gained = Math.floor(base * (1 + 0.5*(chain-1)) * (1 + (combo-1)*0.2));
-      score += gained; scoreEl.textContent = score;
+      // Play clear sound
+      sndClear.currentTime = 0;
+      sndClear.play();
 
-      // clear
-      m.forEach(i=> board[i]=0);
-      await delay(380); // wait for fade
-      const prev = board.slice();
+      // Calculate score for this clear with combo multiplier
+      const uniqueTiles = new Set(matches);
+      // Count per connected groups
+      const groups = groupMatches(board, matches);
+      let gained = 0;
+      for(let group of groups) {
+        const count = group.length;
+        const baseScore = scoreForMatch(count);
+        gained += baseScore * Math.min(chain,10);
+      }
+      score += gained;
+      combo = Math.min(10, chain);
+
+      // Clear matched tiles
+      for(let idx of matches) board[idx] = 0;
+      renderBoard();
+
+      // Collapse board and refill
       board = collapseBoard(board);
-      // when collapse fills with new tiles, we want falling animation: render with prev
-      renderBoard(prev);
-      // increase combo slightly for continuous chain
-      combo = Math.min(10, combo + 0.5);
-      comboEl.textContent = 'x' + combo.toFixed(1);
-      await delay(480);
+      renderBoard();
+
+      await delay(450);
     }
-    // reset combo after short delay
-    setTimeout(()=>{combo=1.0; comboEl.textContent='x1.0';}, 600);
-    processing=false;
+    updateUI();
+    processing = false;
   }
 
-  function delay(ms){return new Promise(res=>setTimeout(res,ms))}
+  // Render swap animation of two cells
+  function renderSwapAnimation(i1, i2, success) {
+    const cells = boardEl.children;
+    const cell1 = cells[i1];
+    const cell2 = cells[i2];
+    if(!cell1 || !cell2) return;
 
-  function onTap(e){
-    if(!running) return;
-    const i = Number(this.dataset.i);
-    if(selected===-1){ selected = i; highlight(i); return; }
-    if(selected===i){ selected=-1; clearHighlight(); return; }
-    const [r1,c1]=rc(selected); const [r2,c2]=rc(i);
-    if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1){ selected = i; clearHighlight(); highlight(i); return; }
-    clearHighlight(); handleSwap(selected,i); selected=-1;
+    const pos1 = cell1.getBoundingClientRect();
+    const pos2 = cell2.getBoundingClientRect();
+
+    const dx = pos2.left - pos1.left;
+    const dy = pos2.top - pos1.top;
+
+    // Animate swap
+    cell1.style.transition = 'transform 300ms ease';
+    cell2.style.transition = 'transform 300ms ease';
+    cell1.style.transform = `translate(${dx}px,${dy}px)`;
+    cell2.style.transform = `translate(${-dx}px,${-dy}px)`;
+
+    setTimeout(() => {
+      cell1.style.transition = '';
+      cell2.style.transition = '';
+      cell1.style.transform = '';
+      cell2.style.transform = '';
+      if(!success) renderBoard();
+    }, 300);
   }
 
-  function highlight(i){
-    const cell = boardEl.querySelector(`.cell[data-i='${i}']`);
-    if(cell) cell.classList.add('selected');
-  }
-  function clearHighlight(){
-    const prev = boardEl.querySelector('.selected'); if(prev) prev.classList.remove('selected');
+  // Utility delay promise
+  function delay(ms) {
+    return new Promise(res => setTimeout(res, ms));
   }
 
-  function startGame(){
-    score=0; scoreEl.textContent=0;
-    combo=1; comboEl.textContent='x1.0';
-    board = generateBoard(); renderBoard();
-    running=true; timeLeft=GAME_TIME; timeEl.textContent=timeLeft;
-    overlay.style.display='none'; sndStart.play().catch(()=>{});
-    timerId = setInterval(()=>{
-      timeLeft--; timeEl.textContent = timeLeft;
-      if(timeLeft<=0){ clearInterval(timerId); running=false; overlay.style.display='flex'; overlay.querySelector('button').textContent='RESTART'; }
-    },1000);
+  // Group matches into connected sets for scoring by length
+  function groupMatches(board, indices) {
+    // Build adjacency list of matched tiles
+    const adj = {};
+    indices.forEach(i => adj[i] = []);
+    const dirs = [[1,0],[-1,0],[0,1],[0,-1]];
+
+    for(let i of indices) {
+      const [r,c] = rc(i);
+      for(let [dr,dc] of dirs) {
+        const nr = r+dr, nc = c+dc;
+        const ni = idx(nr,nc);
+        if(indices.includes(ni)) {
+          adj[i].push(ni);
+        }
+      }
+    }
+
+    // BFS to group connected tiles
+    const visited = new Set();
+    const groups = [];
+    for(let i of indices) {
+      if(visited.has(i)) continue;
+      const queue = [i];
+      const group = [];
+      while(queue.length) {
+        const curr = queue.shift();
+        if(visited.has(curr)) continue;
+        visited.add(curr);
+        group.push(curr);
+        for(let n of adj[curr]) if(!visited.has(n)) queue.push(n);
+      }
+      groups.push(group);
+    }
+    return groups;
   }
 
-  // attach start
+  // Touch / swipe handling for swap
+  let touchStartIndex = null;
+  let touchStartX = 0;
+  let touchStartY = 0;
+
+  boardEl.addEventListener('touchstart', e => {
+    if(!running || processing) return;
+    const target = e.target.closest('.cell');
+    if(!target) return;
+    touchStartIndex = Number(target.dataset.i);
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    e.preventDefault();
+  }, { passive:false });
+
+  boardEl.addEventListener('touchmove', e => {
+    if(touchStartIndex === null) return;
+    e.preventDefault();
+  }, { passive:false });
+
+  boardEl.addEventListener('touchend', e => {
+    if(touchStartIndex === null || !running || processing) {
+      touchStartIndex = null;
+      return;
+    }
+    const touch = e.changedTouches[0];
+    const dx = touch.clientX - touchStartX;
+    const dy = touch.clientY - touchStartY;
+    const absDx = Math.abs(dx);
+    const absDy = Math.abs(dy);
+    if(Math.max(absDx, absDy) < 20) {
+      touchStartIndex = null;
+      return;
+    }
+    const [r,c] = rc(touchStartIndex);
+    let targetR = r;
+    let targetC = c;
+
+    if(absDx > absDy) {
+      targetC += (dx > 0) ? 1 : -1;
+    } else {
+      targetR += (dy > 0) ? 1 : -1;
+    }
+
+    if(targetR < 0 || targetR >= ROWS || targetC < 0 || targetC >= COLS) {
+      touchStartIndex = null;
+      return;
+    }
+    const targetIndex = idx(targetR, targetC);
+    playerMove(touchStartIndex, targetIndex);
+    touchStartIndex = null;
+  }, { passive:false });
+
   startBtn.addEventListener('click', startGame);
 
-  // initial render
-  board = generateBoard(); renderBoard();
-
-  // prevent context menu on long press
-  document.addEventListener('contextmenu', e=>e.preventDefault());
-
-  // optional: expose reset for debugging
-  window.__match3 = { regen: ()=>{board=generateBoard(); renderBoard();} };
+  // 初期表示
+  renderBoard();
+  updateUI();
   </script>
-
-
-<!-- Optional backend: server.py (Flask) for serving files and a simple score leaderboard API -->
-
-<!--
-Save this as server.py and run `python3 server.py`.
-Put index.html, tile images, and mp3 files in a `static` folder next to server.py.
-This is optional — static hosting (GitHub Pages / static webserver) is sufficient for the game.
--->
-
-<!-- server.py -->
-# ------------------------------------
-# from flask import Flask, send_from_directory, request, jsonify
-# import os
-#
-# app = Flask(__name__, static_folder='static')
-#
-# SCORES_FILE = 'scores.json'
-#
-# def load_scores():
-#     import json
-#     if not os.path.exists(SCORES_FILE):
-#         return []
-#     with open(SCORES_FILE,'r',encoding='utf-8') as f:
-#         return json.load(f)
-#
-# def save_scores(scores):
-#     import json
-#     with open(SCORES_FILE,'w',encoding='utf-8') as f:
-#         json.dump(scores,f,ensure_ascii=False,indent=2)
-#
-# @app.route('/')
-# def root():
-#     return send_from_directory('static','index.html')
-#
-# @app.route('/<path:filename>')
-# def static_files(filename):
-#     return send_from_directory('static', filename)
-#
-# @app.route('/api/score', methods=['POST'])
-# def post_score():
-#     data = request.get_json() or {}
-#     name = data.get('name','anon')[:24]
-#     score = int(data.get('score',0))
-#     scores = load_scores()
-#     scores.append({'name':name,'score':score,'ts':int(__import__('time').time())})
-#     scores = sorted(scores, key=lambda x: x['score'], reverse=True)[:100]
-#     save_scores(scores)
-#     return jsonify({'ok':True})
-#
-# @app.route('/api/score', methods=['GET'])
-# def get_scores():
-#     scores = load_scores()
-#     return jsonify(scores[:20])
-#
-# if __name__ == '__main__':
-#     app.run(host='0.0.0.0', port=8000, debug=True)
-# ------------------------------------
+</body>
+</html>
