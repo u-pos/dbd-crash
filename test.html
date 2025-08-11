@@ -10,20 +10,19 @@
       --rows:8;
       --tile-size:11vw; /* 画面幅基準に拡大 */
     }
-    html, body {
-      margin: 0;
-      padding: 0;
-      width: 100%;
-      overflow-x: hidden; /* 右にはみ出すの防止 */
-      -webkit-touch-callout: none;
-      -webkit-user-select: none;
-      -ms-user-select: none;
-      user-select: none;
-      background: #111;
-      color: white;
-      font-family: sans-serif;
-      height: 100vh;
-    }
+html, body {
+    margin: 0;
+    padding: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+}
+canvas {
+    display: block;
+    margin: 0 auto;
+    max-width: 100%;
+}
+
     /* wrap を flex 中央寄せにして左右バランス修正 */
     .wrap {
       width: 100%;
