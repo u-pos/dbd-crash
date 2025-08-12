@@ -127,6 +127,7 @@ flex-direction:column;color:white;font-size:1.5rem;}
 <audio id="sndStart" src="s.mp3" preload="auto"></audio>
 <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
+<audio id="sndCong" src="cong.mp3" preload="auto"></audio>
 
 <script>
 // APIエンドポイント ※URLは自分のサーバーに合わせて修正してください
@@ -320,11 +321,18 @@ function showGameOver(){
   .then(res=>res.json())
   .then(data=>{
     if(data.success && data.entersTop20){
-      // TOP20入り時
+      // 🔹 お祝い効果音
+      const cong = document.getElementById('sndCong');
+      if(cong){
+        cong.currentTime = 0;
+        cong.play().catch(()=>{});
+      }
+
+      // お祝い＋名前入力UI
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div class="congrats-message">
-          🎉 おめでとう！TOP20にランクインしました！ 🎉
+          🎉TOP20にランクインしました🎉
         </div>
         <div>最終スコア</div>
         <div style="font-size:15vw; font-weight:900;">${score}</div>
@@ -333,6 +341,7 @@ function showGameOver(){
         <button id="saveNameBtn" class="start-btn">登録</button>
       `;
 
+      // 登録イベント
       document.getElementById('saveNameBtn').onclick=()=>{
         const name=document.getElementById('playerName').value.trim();
         if(!name){
@@ -350,12 +359,16 @@ function showGameOver(){
             alert('登録しました！');
             loadRanking();
 
-            // 名前入力欄を非表示・ボタンを「再挑戦」に変更
-            document.getElementById('playerName').style.display = 'none';
-            const btn = document.getElementById('saveNameBtn');
-            btn.textContent = '再挑戦';
-            btn.onclick = () => {
+            // 🔹 再挑戦UIに差し替え（HTMLごと書き換え）
+            gameOverOverlay.innerHTML = `
+              <div style="color:yellow; font-size:5vw; font-weight:bold; margin-bottom:1rem;">
+                登録完了！
+              </div>
+              <button id="retryBtn" class="start-btn">再挑戦</button>
+            `;
+            document.getElementById('retryBtn').onclick = ()=>{
               startGame();
+              gameOverOverlay.style.display='none';
             };
           }else{
             alert(res.error || '登録失敗');
@@ -377,6 +390,7 @@ function showGameOver(){
     }
   });
 }
+
 
 function showGameOver_legacy(){
   // 元のゲームオーバー表示（もう使わない）
