@@ -321,14 +321,14 @@ function showGameOver(){
   .then(res=>res.json())
   .then(data=>{
     if(data.success && data.entersTop20){
-      // 🔹 お祝い効果音
+
+      // TOP20お祝い音
       const cong = document.getElementById('sndCong');
-      if(cong){
+      if (cong) {
         cong.currentTime = 0;
         cong.play().catch(()=>{});
       }
 
-      // お祝い＋名前入力UI
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div class="congrats-message">
@@ -341,11 +341,13 @@ function showGameOver(){
         <button id="saveNameBtn" class="start-btn">登録</button>
       `;
 
-      // 登録イベント
-      document.getElementById('saveNameBtn').onclick=()=>{
-        const name=document.getElementById('playerName').value.trim();
-        if(!name){
-          alert('名前を入力してください');
+      const saveBtn = document.getElementById('saveNameBtn');
+      const nameInput = document.getElementById('playerName');
+
+      saveBtn.onclick = () => {
+        const name = nameInput.value.trim();
+        if (!name){
+          alert('名前を登録しましょう');
           return;
         }
         fetch(API_BASE_URL + 'save_score.php',{
@@ -359,16 +361,15 @@ function showGameOver(){
             alert('登録しました！');
             loadRanking();
 
-            // 🔹 再挑戦UIに差し替え（HTMLごと書き換え）
-            gameOverOverlay.innerHTML = `
-              <div style="color:yellow; font-size:5vw; font-weight:bold; margin-bottom:1rem;">
-                登録完了！
-              </div>
-              <button id="retryBtn" class="start-btn">再挑戦</button>
-            `;
-            document.getElementById('retryBtn').onclick = ()=>{
-              startGame();
+            // 入力欄を消す
+            nameInput.remove();
+            // ボタンのテキストと色を変更
+            saveBtn.textContent = '再度挑戦する';
+            saveBtn.style.background = 'linear-gradient(90deg,#7bff8f,#2ecc71)';
+            // 再挑戦クリックでゲーム開始＆オーバーレイ消去
+            saveBtn.onclick = () => {
               gameOverOverlay.style.display='none';
+              startGame();
             };
           }else{
             alert(res.error || '登録失敗');
@@ -376,7 +377,6 @@ function showGameOver(){
         });
       };
     }else{
-      // 通常のゲームオーバー
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div>最終スコア</div>
@@ -390,6 +390,7 @@ function showGameOver(){
     }
   });
 }
+
 
 
 function showGameOver_legacy(){
