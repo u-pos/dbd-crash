@@ -12,7 +12,7 @@ html,body {
   overflow:hidden; overscroll-behavior:none;
   background:#111; color:#fff; font-family:sans-serif;
 }
-      .congrats-message {
+.congrats-message {
   color: #ffea00;
   font-size: 5vw;
   font-weight: bold;
@@ -21,11 +21,11 @@ html,body {
   text-shadow: 0 0 8px #fff78a, 0 0 16px #ffcc00;
   animation: pulseGlow 1.5s ease-in-out infinite;
 }
-
 @keyframes pulseGlow {
   0%,100% { text-shadow: 0 0 8px #fff78a, 0 0 16px #ffcc00; transform: scale(1);}
   50% { text-shadow: 0 0 16px #fff78a, 0 0 32px #ffea00; transform: scale(1.05);}
 }
+
 
 .wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; }
 .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; }
@@ -322,14 +322,14 @@ function showGameOver(){
   .then(data=>{
     if(data.success && data.entersTop20){
 
-      // TOP20お祝い音
+      // 🎵 お祝い音
       const cong = document.getElementById('sndCong');
       if (cong) {
         cong.currentTime = 0;
         cong.play().catch(()=>{});
       }
 
-      // 初期UI
+      // 🎉 TOP20メッセージ＋登録／再挑戦UI
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div class="congrats-message">
@@ -339,11 +339,18 @@ function showGameOver(){
         <div style="font-size:15vw; font-weight:900;">${score}</div>
         <input type="text" id="playerName" maxlength="50" placeholder="名前を入力"
                style="font-size:5vw;padding:8px;margin:1rem 0;border-radius:8px;">
-        <button id="saveNameBtn" class="start-btn">登録</button>
+        <div>
+          <button id="saveNameBtn" class="start-btn">登録</button>
+          <button id="retryBtn" class="start-btn" style="display:none;background:linear-gradient(90deg,#7bff8f,#2ecc71);">再挑戦</button>
+        </div>
       `;
 
-      document.getElementById('saveNameBtn').onclick = () => {
-        const name = document.getElementById('playerName').value.trim();
+      const saveBtn  = document.getElementById('saveNameBtn');
+      const retryBtn = document.getElementById('retryBtn');
+      const nameInput= document.getElementById('playerName');
+
+      saveBtn.onclick = () => {
+        const name = nameInput.value.trim();
         if (!name){
           alert('名前を入力してください');
           return;
@@ -358,26 +365,23 @@ function showGameOver(){
           if(res.success){
             alert('登録しました！');
             loadRanking();
-
-            // 🔹 成功したら overlay HTML を丸ごと再描画
-            gameOverOverlay.innerHTML = `
-              <div style="color:yellow; font-size:5vw; font-weight:bold; margin-bottom:1rem;">
-                登録完了！
-              </div>
-              <button id="retryBtn" class="start-btn">再挑戦</button>
-            `;
-            document.getElementById('retryBtn').onclick = ()=>{
-              gameOverOverlay.style.display='none';
-              startGame();
-            };
+            // 入力欄と登録ボタンを非表示→再挑戦表示
+            nameInput.style.display = 'none';
+            saveBtn.style.display   = 'none';
+            retryBtn.style.display  = 'inline-block';
           }else{
             alert(res.error || '登録失敗');
           }
         });
       };
 
+      retryBtn.onclick = () => {
+        gameOverOverlay.style.display='none';
+        startGame();
+      };
+
     } else {
-      // TOP20以外
+      // 通常のゲームオーバー
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div>最終スコア</div>
