@@ -1,323 +1,230 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="ja">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport"
-      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Match-3 Slide Animation Fixed Size</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>Match-3 Game</title>
 <style>
-:root {
-  --cols: 8;
-  --rows: 8;
+body {
+    margin: 0;
+    background: #222;
+    color: white;
+    text-align: center;
+    font-family: sans-serif;
+    overflow: hidden;
 }
-html,body {
-  margin:0; padding:0;
-  width:100%; height:100%;
-  overflow:hidden;
-  background:#111; color:#fff;
-  font-family:sans-serif;
-  overscroll-behavior:none;
-  -webkit-user-select:none; user-select:none;
+#overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.85);
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    z-index: 100;
 }
-.wrap { display:flex; flex-direction:column; align-items:center; height:100%; }
-.header { display:flex; justify-content:space-between; width:90%; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; }
-.panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
-#combo {color:#ffde59;font-weight:900;font-size:4.4vw;}
-.board {
-  position:relative;
-  background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
-  padding:6px; border-radius:10px;
+#game {
+    display: grid;
+    margin: auto;
+    touch-action: none;
 }
-.cell {
-  position:absolute;
-  border-radius:8px;
-  overflow:hidden;
-  background:#111a2a;
-  display:flex; align-items:center; justify-content:center;
-  transition:transform 0.35s ease;
+.tile {
+    width: 48px;
+    height: 48px;
+    background-size: cover;
+    transition: transform 0.25s ease, top 0.25s ease;
 }
-.cell img { width:100%; height:100%; object-fit:cover; pointer-events:none; }
-.start-overlay,#gameOverOverlay {position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); border-radius:10px; flex-direction:column; z-index:10;}
-.start-btn {background:linear-gradient(90deg,#ff7ab6,#7b61ff); border:none; padding:14px 26px; border-radius:999px; font-size:1.8rem; color:#fff; cursor:pointer;}
-#gameOverOverlay { font-size:10vw; font-weight:900; color:#fff; flex-wrap:wrap; gap:1vw; text-align:center; }
-.bottom-buttons { display:flex; gap:1.5rem; margin-top:0.8rem;}
-.icon-btn {background:none; border:none; font-size:2.8rem; color:white; cursor:pointer;}
-.rules-table-fixed { margin-top:0.5rem; font-size:0.75rem; width:100%; }
-.rules-table-fixed table { width:100%; color:#fff; border-collapse:collapse; text-align:center; }
-.rules-table-fixed th,.rules-table-fixed td { border-bottom:1px solid #555; padding:0.2rem;}
-.rules-table-fixed th {border-bottom:2px solid #ffde59;}
-.pause-overlay {position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:black; z-index:20; flex-direction:column; color:white; font-size:1.5rem;}
-.pause-overlay button { font-size:2.5rem; margin-top:1rem;}
+@keyframes vanish {
+    0% { transform: scale(1); opacity: 1; }
+    50% { transform: scale(1.2); opacity: 0.5; }
+    100% { transform: scale(0); opacity: 0; }
+}
+.tile.vanish {
+    animation: vanish 0.4s ease-out forwards;
+}
+#scoreboard {
+    display: flex;
+    justify-content: space-around;
+    margin-top: 5px;
+}
+#rules {
+    margin-top: 10px;
+}
+#rules table {
+    border-collapse: collapse;
+    margin: auto;
+}
+#rules th, #rules td {
+    border: 1px solid white;
+    padding: 4px 8px;
+}
 </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="header">
-    <div class="panel">Score:<span id="score">0</span></div>
-    <div class="panel">残り <span id="time">60</span> 秒</div>
-    <div class="panel"><span id="combo"></span></div>
-  </div>
-  <div id="boardWrap" style="position:relative;">
-    <div id="board" class="board"></div>
-    <div id="overlay" class="start-overlay"><button id="startBtn" class="start-btn">START</button></div>
-    <div id="pauseOverlay" class="pause-overlay">
-      <div id="pauseText">一時停止中</div>
-      <button id="resumeBtn" class="start-btn">▶</button>
+<div id="overlay">
+    <p>3つ以上繋げて消そう！<br>60秒で何点取れるかな？</p>
+    <button id="startBtn">START</button>
+    <div id="rules">
+        <table>
+            <tr><th>消去数</th><th>得点</th></tr>
+            <tr><td>3個</td><td>100点</td></tr>
+            <tr><td>4個</td><td>200点</td></tr>
+            <tr><td>5個</td><td>300点</td></tr>
+            <tr><th>連鎖数</th><th>倍率</th></tr>
+            <tr><td>2連鎖目</td><td>2倍</td></tr>
+            <tr><td>3連鎖目</td><td>3倍</td></tr>
+            <tr><td>…</td><td>…</td></tr>
+            <tr><td>10連鎖目</td><td>10倍</td></tr>
+        </table>
     </div>
-    <div id="gameOverOverlay" style="display:none;"></div>
-  </div>
-  <div class="bottom-buttons">
-    <button id="muteBtn" class="icon-btn">🔇</button>
-    <button id="pauseBtn" class="icon-btn">⏸</button>
-  </div>
-  <div class="rules-table-fixed">
-    <table>
-      <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
-      <tbody>
-        <tr><td>3個消し</td><td>100点</td></tr>
-        <tr><td>4個消し</td><td>300点</td></tr>
-        <tr><td>5個消し</td><td>500点</td></tr>
-        <tr><td colspan="2">2コンボ目=×2…4コンボで3個消しは400点</td></tr>
-      </tbody>
-    </table>
-  </div>
 </div>
-
-<audio id="sndStart" src="s.mp3"></audio>
-<audio id="sndClear" src="cc.mp3"></audio>
-<audio id="bgm" src="bgm2.mp3" loop></audio>
+<div id="scoreboard">
+    <div id="score">スコア: 0</div>
+    <div id="combo"></div>
+    <div id="time">残り60秒</div>
+</div>
+<div id="game"></div>
 
 <script>
-const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60,gap=4;
-let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
-let cellSize;
-const boardEl=document.getElementById('board');
-const scoreEl=document.getElementById('score'),timeEl=document.getElementById('time'),comboEl=document.getElementById('combo');
-const overlay=document.getElementById('overlay'),gameOverOverlay=document.getElementById('gameOverOverlay');
-const sndStart=document.getElementById('sndStart'),sndClear=document.getElementById('sndClear'),bgm=document.getElementById('bgm');
-bgm.volume=0.2;
+const rows = 8;
+const cols = 8;
+const tileTypes = 6;
+let board = [];
+let score = 0;
+let comboCount = 0;
+let timeLeft = 60;
+let gameInterval;
 
-function updateCellSize(){
-  const bw = boardEl.clientWidth;
-  cellSize = (bw - gap*(COLS-1)) / COLS;
-  boardEl.style.height = (cellSize*ROWS + gap*(ROWS-1)) + 'px';
-}
-window.addEventListener('resize', ()=>{ updateCellSize(); renderBoard(); });
+const gameEl = document.getElementById("game");
+gameEl.style.gridTemplateColumns = `repeat(${cols}, 48px)`;
+gameEl.style.gridTemplateRows = `repeat(${rows}, 48px)`;
 
-function idx(r,c){return r*COLS+c}
-function rc(i){return [Math.floor(i/COLS),i%COLS]}
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
-
-function generateBoard(){
-  const b=new Array(ROWS*COLS).fill(0);
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      while(true){
-        const t=randInt(1,TILE_TYPES); b[idx(r,c)]=t;
-        let bad=false;
-        if(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t) bad=true;
-        if(r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t) bad=true;
-        if(!bad) break;
-      }
-    }
-  }
-  return b;
-}
-function findMatches(b){
-  const clear=new Set();
-  for(let r=0;r<ROWS;r++){
-    let runT=null,runS=0,runL=0;
-    for(let c=0;c<COLS;c++){
-      const t=b[idx(r,c)];
-      if(t===runT) runL++;
-      else{ if(runT&&runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k)); runT=t; runS=c; runL=1; }
-    }
-    if(runT&&runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
-  }
-  for(let c=0;c<COLS;c++){
-    let runT=null,runS=0,runL=0;
-    for(let r=0;r<ROWS;r++){
-      const t=b[idx(r,c)];
-      if(t===runT) runL++;
-      else{ if(runT&&runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c)); runT=t; runS=r; runL=1; }
-    }
-    if(runT&&runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
-  }
-  return Array.from(clear);
-}
-function collapseBoard(b){
-  const nb=b.slice();
-  for(let c=0;c<COLS;c++){
-    let empty=ROWS-1;
-    for(let r=ROWS-1;r>=0;r--){
-      if(nb[idx(r,c)]!==0){
-        nb[idx(empty,c)]=nb[idx(r,c)]; if(empty!==r) nb[idx(r,c)]=0;
-        empty--;
-      }
-    }
-    for(let r=empty;r>=0;r--) nb[idx(r,c)]=randInt(1,TILE_TYPES);
-  }
-  return nb;
-}
-function scoreForMatch(n){
-  switch(n){
-    case 3:return 100; case 4:return 300; case 5:return 500;
-    default:return 500+(n-5)*100;
-  }
-}
-function createTile(r,c,type){
-  const div=document.createElement('div');
-  div.className='cell';
-  div.style.width=`${cellSize}px`; div.style.height=`${cellSize}px`;
-  div.style.transform=`translate(${c*(cellSize+gap)}px,${r*(cellSize+gap)}px)`;
-  const img=document.createElement('img'); img.src=`tile${type}.png`;
-  div.appendChild(img); boardEl.appendChild(div);
-  return div;
-}
-function renderBoard(prevBoard) {
-  boardEl.innerHTML = '';
-  for (let i = 0; i < board.length; i++) {
-    const t = board[i];
-    const cell = document.createElement('div');
-    cell.className = 'cell';
-    cell.dataset.i = i;
-
-    if (t > 0) {
-      const img = document.createElement('img');
-      img.src = `tile${t}.png`;
-
-      // 前の盤面があり、種類が同じなら移動距離計算
-      if (prevBoard) {
-        const [newR, newC] = rc(i);
-        // 上から落ちてきた本来の位置を探す
-        const oldIndex = prevBoard.findIndex(
-          (val, idx) => val === t && idx % COLS === newC && idx <= i
-        );
-        if (oldIndex !== -1) {
-          const [oldR] = rc(oldIndex);
-          const dy = (oldR - newR) * (cellSize + gap);
-          if (dy < 0) { // 下に落下
-            img.style.transform = `translateY(${dy}px)`;
-            requestAnimationFrame(() => {
-              img.style.transition = 'transform 0.3s ease';
-              img.style.transform = 'translateY(0)';
-            });
-          }
+function createBoard() {
+    board = [];
+    for (let r = 0; r < rows; r++) {
+        board[r] = [];
+        for (let c = 0; c < cols; c++) {
+            let tile;
+            do {
+                tile = Math.floor(Math.random() * tileTypes) + 1;
+            } while (wouldMatch(r, c, tile));
+            board[r][c] = tile;
         }
-      }
-
-      cell.appendChild(img);
     }
-    boardEl.appendChild(cell);
-  }
 }
 
-function groupMatches(b,indices){
-  const adj={}; indices.forEach(i=>adj[i]=[]);
-  const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
-  for(let i of indices){
-    const [r,c]=rc(i);
-    for(let[dr,dc] of dirs){
-      const nr=r+dr,nc=c+dc,ni=idx(nr,nc);
-      if(indices.includes(ni)) adj[i].push(ni);
-    }
-  }
-  const visited=new Set(),groups=[];
-  for(let i of indices){
-    if(visited.has(i)) continue;
-    const q=[i],g=[];
-    while(q.length){
-      const cur=q.shift();
-      if(visited.has(cur)) continue;
-      visited.add(cur); g.push(cur);
-      for(let n of adj[cur]) if(!visited.has(n)) q.push(n);
-    }
-    groups.push(g);
-  }
-  return groups;
+function wouldMatch(r, c, tile) {
+    if (c >= 2 && board[r][c-1] === tile && board[r][c-2] === tile) return true;
+    if (r >= 2 && board[r-1][c] === tile && board[r-2][c] === tile) return true;
+    return false;
 }
-async function playerMove(i1,i2){
-  if(!running||processing)return;
-  const [r1,c1]=rc(i1),[r2,c2]=rc(i2);
-  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
-  processing=true;
-  board=swap(board,i1,i2);
-  let matches=findMatches(board);
-  if(!matches.length){renderBoard();processing=false;return;}
-  sndClear.play();
-  let chain=0;
-  while(matches.length){
-    chain++;
-    let gained=0;
-    for(let g of groupMatches(board,matches)){
-      gained+=scoreForMatch(g.length)*Math.min(chain,10);
-    }
-    score+=gained; combo=Math.min(10,chain);
-    matches.forEach(i=>board[i]=0);
-    const prev=board.slice();
-    board=collapseBoard(board);
-    renderBoard(prev);
-    await new Promise(r=>setTimeout(r,350));
-    matches=findMatches(board);
-  }
-  updateUI(); processing=false;
-}
-function swap(b,i1,i2){const nb=b.slice(); [nb[i1],nb[i2]]=[nb[i2],nb[i1]]; return nb;}
-function startGame(){
-  bgm.currentTime=0; bgm.play().catch(()=>{});
-  board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false; running=true;
-  overlay.style.display='none'; gameOverOverlay.style.display='none';
-  updateUI(); renderBoard();
-  sndStart.play();
-  timerId=setInterval(()=>{
-    timeLeft--; if(timeLeft<=0){clearInterval(timerId);running=false;showGameOver();}
-    updateUI();
-  },1000);
-}
-function updateUI(){
-  scoreEl.textContent=score; timeEl.textContent=timeLeft;
-  comboEl.textContent=combo>1?`${combo}コンボ！`:'';
-}
-function showGameOver(){
-  bgm.pause();
-  gameOverOverlay.style.display='flex';
-  gameOverOverlay.innerHTML=`<div>最終スコア</div><div style="font-size:15vw;font-weight:900;">${score}</div><button id="restartBtn" class="start-btn">RESTART</button>`;
-  document.getElementById('restartBtn').onclick=()=>{startGame(); gameOverOverlay.style.display='none';};
-}
-// タッチ
-let tStart=null,sx=0,sy=0;
-boardEl.addEventListener('touchstart',e=>{
-  if(!running||processing)return;
-  const idxTile=[...boardEl.children].indexOf(e.target.closest('.cell'));
-  if(idxTile<0)return;
-  tStart=idxTile; sx=e.touches[0].clientX; sy=e.touches[0].clientY;
-},{passive:false});
-boardEl.addEventListener('touchend',e=>{
-  if(tStart==null||!running||processing)return;
-  const dx=e.changedTouches[0].clientX-sx, dy=e.changedTouches[0].clientY-sy;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;
-  const [r,c]=rc(tStart); let tr=r,tc=c;
-  if(Math.abs(dx)>Math.abs(dy)) tc+=(dx>0?1:-1); else tr+=(dy>0?1:-1);
-  if(tr>=0&&tr<ROWS&&tc>=0&&tc<COLS) playerMove(tStart,idx(tr,tc));
-  tStart=null;
-},{passive:false});
-document.getElementById('startBtn').onclick=startGame;
-let muted=false;
-document.getElementById('muteBtn').onclick=()=>{
-  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
-  document.getElementById('muteBtn').textContent=muted?'🔈':'🔇';
-};
-document.getElementById('pauseBtn').onclick=()=>{
-  if(!running)return;
-  clearInterval(timerId); running=false; bgm.pause();
-  document.getElementById('pauseText').textContent='一時停止中';
-  document.getElementById('pauseOverlay').style.display='flex';
-};
-document.getElementById('resumeBtn').onclick=()=>{
-  running=true; pauseOverlay.style.display='none'; bgm.play().catch(()=>{});
-  timerId=setInterval(()=>{timeLeft--; if(timeLeft<=0){clearInterval(timerId);running=false; showGameOver();} updateUI();},1000);
-};
-document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 
-// 初期描画（スタート前にも盤面表示）
-board=generate
+function drawBoard() {
+    gameEl.innerHTML = "";
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+            const tileEl = document.createElement("div");
+            tileEl.className = "tile";
+            tileEl.style.backgroundImage = `url(tile${board[r][c]}.png)`;
+            tileEl.dataset.row = r;
+            tileEl.dataset.col = c;
+            gameEl.appendChild(tileEl);
+        }
+    }
+}
+
+function findMatches() {
+    let matches = [];
+    // 横方向
+    for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols-2; c++) {
+            let t = board[r][c];
+            if (t && t === board[r][c+1] && t === board[r][c+2]) {
+                matches.push([r,c],[r,c+1],[r,c+2]);
+            }
+        }
+    }
+    // 縦方向
+    for (let c = 0; c < cols; c++) {
+        for (let r = 0; r < rows-2; r++) {
+            let t = board[r][c];
+            if (t && t === board[r+1][c] && t === board[r+2][c]) {
+                matches.push([r,c],[r+1,c],[r+2,c]);
+            }
+        }
+    }
+    return matches.filter((m, i, arr) =>
+        arr.findIndex(x => x[0] === m[0] && x[1] === m[1]) === i
+    );
+}
+
+function clearMatches(matches) {
+    if (matches.length === 0) return false;
+    comboCount++;
+    let baseScore = 0;
+    let tilesCount = matches.length;
+    if (tilesCount >= 5) baseScore = 300;
+    else if (tilesCount === 4) baseScore = 200;
+    else baseScore = 100;
+    score += baseScore * Math.min(comboCount, 10);
+    document.getElementById("score").textContent = `スコア: ${score}`;
+    document.getElementById("combo").textContent = `${comboCount}コンボ！`;
+
+    matches.forEach(([r,c]) => {
+        const tileEl = document.querySelector(`.tile[data-row='${r}'][data-col='${c}']`);
+        if (tileEl) tileEl.classList.add("vanish");
+        board[r][c] = null;
+    });
+    setTimeout(dropTiles, 300);
+    return true;
+}
+
+function dropTiles() {
+    for (let c = 0; c < cols; c++) {
+        let empty = 0;
+        for (let r = rows - 1; r >= 0; r--) {
+            if (board[r][c] === null) {
+                empty++;
+            } else if (empty > 0) {
+                board[r+empty][c] = board[r][c];
+                board[r][c] = null;
+            }
+        }
+        for (let r = 0; r < empty; r++) {
+            board[r][c] = Math.floor(Math.random() * tileTypes) + 1;
+        }
+    }
+    drawBoard();
+    setTimeout(() => {
+        let newMatches = findMatches();
+        if (newMatches.length > 0) {
+            clearMatches(newMatches);
+        } else {
+            comboCount = 0;
+        }
+    }, 250);
+}
+
+document.getElementById("startBtn").addEventListener("click", () => {
+    document.getElementById("overlay").style.display = "none";
+    score = 0;
+    comboCount = 0;
+    timeLeft = 60;
+    createBoard();
+    drawBoard();
+    document.getElementById("score").textContent = `スコア: ${score}`;
+    document.getElementById("combo").textContent = ``;
+    document.getElementById("time").textContent = `残り${timeLeft}秒`;
+    clearInterval(gameInterval);
+    gameInterval = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").textContent = `残り${timeLeft}秒`;
+        if (timeLeft <= 0) {
+            clearInterval(gameInterval);
+            alert(`ゲーム終了！\n最終スコア: ${score}`);
+        }
+    }, 1000);
+});
+</script>
+</body>
+</html>
