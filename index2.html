@@ -11,73 +11,47 @@
   --tile-size:11vw;
 }
 html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;
-  overflow: hidden;             /* 横縦スクロール禁止 */
-  overscroll-behavior: none;    /* モバイルのバウンス禁止 */
+  margin: 0; padding: 0;
+  width: 100%; height: 100%;
+  overflow: hidden;             /* 縦横スクロール禁止 */
+  overscroll-behavior: none;
   -webkit-touch-callout: none;
   -webkit-user-select: none;
   user-select: none;
-  background: #111;
-  color: white;
+  background: #111; color: white;
   font-family: sans-serif;
 }
 .wrap {
   width: 100%;
   height: 100%;
   display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ui {
-  display: flex;
   flex-direction: column;
   align-items: center;
 }
+.ui { display: flex; flex-direction: column; align-items: center; }
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5vw;
-  font-size: 3.6vw;
-  font-weight: 600;
+  display: flex; justify-content: space-between; align-items: center;
+  margin-bottom: 1.5vw; font-size: 3.6vw; font-weight: 600;
 }
 .panel {
   background: rgba(255,255,255,0.04);
-  padding: 0.8vw 1.5vw;
-  border-radius: 12px;
-  min-width: 28vw;
-  text-align: center;
+  padding: 0.8vw 1.5vw; border-radius: 12px;
+  min-width: 28vw; text-align: center;
 }
 #combo { color: #ffde59; font-weight: 900; font-size: 4.4vw; }
 .board {
   background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
-  padding: 6px;
-  border-radius: 10px;
+  padding: 6px; border-radius: 10px;
   display: grid;
   grid-template-columns: repeat(var(--cols), var(--tile-size));
-  gap: 4px;
-  touch-action: none;
-  box-sizing: border-box;
+  gap: 4px; touch-action: none; box-sizing: border-box;
 }
 .cell {
-  width: var(--tile-size);
-  height: var(--tile-size);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #111a2a;
-  display:flex;
-  align-items:center;
-  justify-content:center;
+  width: var(--tile-size); height: var(--tile-size);
+  border-radius: 8px; overflow: hidden;
+  background: #111a2a; display:flex; align-items:center; justify-content:center;
 }
-.cell img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events:none;
-}
+.cell img { width:100%; height:100%; object-fit:cover; pointer-events:none; }
 @keyframes vanish {
   0% { transform: scale(1); opacity: 1; }
   50% { transform: scale(1.25); opacity: 0.6; }
@@ -93,123 +67,127 @@ html, body {
 }
 .start-btn {
   background: linear-gradient(90deg,#ff7ab6,#7b61ff);
-  border: none;
-  padding: 14px 26px;
-  border-radius: 999px;
-  font-size: 1.8rem;
-  color: #fff;
+  border: none; padding: 14px 26px;
+  border-radius: 999px; font-size: 1.8rem; color: #fff;
 }
 #gameOverOverlay {
   font-size: 10vw; font-weight: 900; color: #fff;
   flex-wrap: wrap; gap: 1vw; text-align: center; line-height: 1.1;
 }
-.footer-row {
-  display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-  align-items: flex-start;
-}
-.rules-table table { border-collapse: collapse; }
-.right-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.2rem; /* ボタン間隔広げた */
+.bottom-buttons {
+  display: flex; justify-content: center; align-items: center;
+  gap: 1.5rem; margin-top: 0.8rem;
 }
 .icon-btn {
-  background: none;
-  border: none;
-  font-size: 2.8rem; /* 絵文字サイズ */
-  color: white;
-  cursor: pointer;
-  line-height: 1;
+  background: none; border: none;
+  font-size: 2.8rem; color: white; cursor: pointer; line-height: 1;
+}
+.text-btn {
+  background: none; border: 2px solid #ffde59; border-radius: 8px;
+  padding: 0.3rem 0.8rem; font-size: 1.2rem;
+  color: #ffde59; cursor: pointer;
 }
 .pause-overlay {
   position: absolute;
   inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: black; /* 盤面だけ完全黒で隠す */
-  z-index: 20;
+  display: flex; align-items: center; justify-content: center;
+  background: black; z-index: 20;
 }
-.pause-overlay button {
-  font-size: 2.5rem;
+.pause-overlay button { font-size: 2.5rem; }
+/* ルールオーバーレイ */
+#ruleOverlay {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,0.85);
+  display: none; align-items: center; justify-content: center;
+  z-index: 30; padding: 1rem;
+}
+.rule-content {
+  background: #222; padding: 1rem; border-radius: 12px;
+  max-width: 90%; color: white;
+}
+.rule-content table { width: 100%; border-collapse: collapse; text-align: center; }
+.rule-content th, .rule-content td { border-bottom: 1px solid #555; padding: 0.5rem; }
+.rule-close {
+  display: block; margin: 1rem auto 0; padding: 0.5rem 1rem;
+  border: none; background: #ff7ab6; color: white; border-radius: 8px;
+  font-size: 1rem; cursor: pointer;
 }
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="ui">
-  <div class="header">
-    <div class="panel">Score: <span id="score">0</span></div>
-    <div class="panel">残り <span id="time">60</span> 秒</div>
-    <div class="panel"><span id="combo"></span></div>
-  </div>
-  <div id="boardWrap" style="position:relative;">
-    <div id="board" class="board"></div>
-    <div id="overlay" class="start-overlay">
-      <button id="startBtn" class="start-btn">START</button>
+  <div class="ui">
+    <div class="header">
+      <div class="panel">Score: <span id="score">0</span></div>
+      <div class="panel">残り <span id="time">60</span> 秒</div>
+      <div class="panel"><span id="combo"></span></div>
     </div>
-    <div id="pauseOverlay" class="pause-overlay" style="display:none;">
-      <button id="resumeBtn" class="start-btn">▶</button>
-    </div>
-    <div id="gameOverOverlay" style="display:none;"></div>
-  </div>
-  <div class="footer">
-    <div class="footer-row">
-      <!-- 新しい表 -->
-      <div class="rules-table">
-        <table style="width:100%; border-collapse: collapse; color: #fff; text-align: center;">
-          <thead>
-            <tr>
-              <th style="border-bottom: 2px solid #ffde59; padding: 0.5rem;">得点ルール</th>
-              <th style="border-bottom: 2px solid #ffde59; padding: 0.5rem;">内容</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">3個消し</td>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">100点</td>
-            </tr>
-            <tr>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">4個消し</td>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">200点</td>
-            </tr>
-            <tr>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">5個消し</td>
-              <td style="border-bottom: 1px solid #555; padding: 0.5rem;">300点</td>
-            </tr>
-            <tr>
-              <td colspan="2" style="border-bottom: 1px solid #555; padding: 0.5rem;">
-                2コンボ目は得点2倍、3コンボ目は得点3倍入ります。<br />
-                ※4コンボ目で3個消えたら1200点入ります。
-              </td>
-            </tr>
-          </tbody>
-        </table>
+    <div id="boardWrap" style="position:relative;">
+      <div id="board" class="board"></div>
+      <div id="overlay" class="start-overlay">
+        <button id="startBtn" class="start-btn">START</button>
       </div>
-      <!-- ボタン -->
-      <div class="right-buttons">
-        <button id="muteBtn" class="icon-btn">🔇</button>
-        <button id="pauseBtn" class="icon-btn">⏸</button>
+      <div id="pauseOverlay" class="pause-overlay" style="display:none;">
+        <button id="resumeBtn" class="start-btn">▶</button>
       </div>
+      <div id="gameOverOverlay" style="display:none;"></div>
+    </div>
+    <!-- 常時表示の3ボタン -->
+    <div class="bottom-buttons">
+      <button id="muteBtn" class="icon-btn">🔇</button>
+      <button id="ruleBtn" class="text-btn">ルール</button>
+      <button id="pauseBtn" class="icon-btn">⏸</button>
     </div>
   </div>
-</div>
 </div>
 
+<!-- ルールオーバーレイ -->
+<div id="ruleOverlay">
+  <div class="rule-content">
+    <table>
+      <thead>
+        <tr>
+          <th style="border-bottom: 2px solid #ffde59;">得点ルール</th>
+          <th style="border-bottom: 2px solid #ffde59;">内容</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>3個消し</td><td>100点</td></tr>
+        <tr><td>4個消し</td><td>200点</td></tr>
+        <tr><td>5個消し</td><td>300点</td></tr>
+        <tr>
+          <td colspan="2">
+            2コンボ目は得点2倍、3コンボ目は得点3倍入ります。<br>
+            ※4コンボ目で3個消えたら1200点入ります。
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <button id="closeRule" class="rule-close">閉じる</button>
+  </div>
+</div>
+
+<!-- サウンド -->
 <audio id="sndStart" src="s.mp3" preload="auto"></audio>
 <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-// ======== 以下、前回の全関数入りゲームロジック。縦スクロール防止も末尾にあります ========
-// （ゲームロジック本体は前回版と同じなので省略説明）
-/* --- 同じJavaScriptロジックをすべてここに配置 --- */
-// ... 省略せずにコピペしてください（前回フル版のJS本体） ...
+// ===== 基本ゲーム変数, 関数（省略せず前回のフル版そのまま） =====
+// ... ここに前回フル版のstartGame(), renderBoard(), playerMove()などを配置 ...
 
-// ミュート切替
+// === 新機能: ルールオーバーレイ ===
+const ruleBtn = document.getElementById('ruleBtn');
+const ruleOverlay = document.getElementById('ruleOverlay');
+const closeRule = document.getElementById('closeRule');
+ruleBtn.addEventListener('click', ()=> {
+  ruleOverlay.style.display = 'flex';
+});
+closeRule.addEventListener('click', ()=> {
+  ruleOverlay.style.display = 'none';
+});
+
+// === ミュート ===
 const muteBtn=document.getElementById('muteBtn');
 let muted=false;
 muteBtn.addEventListener('click',()=>{
@@ -219,7 +197,29 @@ muteBtn.addEventListener('click',()=>{
   sndStart.muted=muted;
   muteBtn.textContent = muted ? '🔈' : '🔇';
 });
-// 縦スクロール防止
+
+// === 一時停止 ===
+const pauseBtn=document.getElementById('pauseBtn');
+const pauseOverlay=document.getElementById('pauseOverlay');
+const resumeBtn=document.getElementById('resumeBtn');
+
+pauseBtn.addEventListener('click',()=>{
+  if(!running) return;
+  clearInterval(timerId);
+  running=false; bgm.pause();
+  pauseOverlay.style.display='flex';
+});
+resumeBtn.addEventListener('click',()=>{
+  running=true; pauseOverlay.style.display='none';
+  bgm.play().catch(()=>{});
+  timerId=setInterval(()=>{
+    timeLeft--;
+    if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); }
+    updateUI();
+  },1000);
+});
+
+// === 縦スクロール防止 ===
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
 </script>
 </body>
