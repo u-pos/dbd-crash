@@ -12,6 +12,21 @@ html,body {
   overflow:hidden; overscroll-behavior:none;
   background:#111; color:#fff; font-family:sans-serif;
 }
+      .congrats-message {
+  color: #ffea00;
+  font-size: 5vw;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  text-align: center;
+  text-shadow: 0 0 8px #fff78a, 0 0 16px #ffcc00;
+  animation: pulseGlow 1.5s ease-in-out infinite;
+}
+
+@keyframes pulseGlow {
+  0%,100% { text-shadow: 0 0 8px #fff78a, 0 0 16px #ffcc00; transform: scale(1);}
+  50% { text-shadow: 0 0 16px #fff78a, 0 0 32px #ffea00; transform: scale(1.05);}
+}
+
 .wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; }
 .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; }
 .panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
@@ -297,7 +312,7 @@ function updateUI(){
 }
 function showGameOver(){
   bgm.pause();
-  fetch(API_BASE_URL+'check_rank.php',{
+  fetch(API_BASE_URL + 'check_rank.php',{
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({score})
@@ -305,17 +320,26 @@ function showGameOver(){
   .then(res=>res.json())
   .then(data=>{
     if(data.success && data.entersTop20){
+      // TOP20入り時
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
+        <div class="congrats-message">
+          🎉 おめでとう！TOP20にランクインしました！ 🎉
+        </div>
         <div>最終スコア</div>
         <div style="font-size:15vw; font-weight:900;">${score}</div>
-        <input type="text" id="playerName" maxlength="50" placeholder="名前を入力" style="font-size:5vw;padding:5px;margin:1rem 0;">
+        <input type="text" id="playerName" maxlength="50" placeholder="名前を入力"
+               style="font-size:5vw;padding:8px;margin:1rem 0;border-radius:8px;">
         <button id="saveNameBtn" class="start-btn">登録</button>
       `;
+
       document.getElementById('saveNameBtn').onclick=()=>{
         const name=document.getElementById('playerName').value.trim();
-        if(!name){alert('名前を入力してください');return;}
-        fetch(API_BASE_URL+'save_score.php',{
+        if(!name){
+          alert('名前を入力してください');
+          return;
+        }
+        fetch(API_BASE_URL + 'save_score.php',{
           method:'POST',
           headers:{'Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams({name,score})
@@ -325,13 +349,21 @@ function showGameOver(){
           if(res.success){
             alert('登録しました！');
             loadRanking();
-            startGame();
+
+            // 名前入力欄を非表示・ボタンを「再挑戦」に変更
+            document.getElementById('playerName').style.display = 'none';
+            const btn = document.getElementById('saveNameBtn');
+            btn.textContent = '再挑戦';
+            btn.onclick = () => {
+              startGame();
+            };
           }else{
             alert(res.error || '登録失敗');
           }
         });
       };
     }else{
+      // 通常のゲームオーバー
       gameOverOverlay.style.display='flex';
       gameOverOverlay.innerHTML=`
         <div>最終スコア</div>
@@ -339,11 +371,13 @@ function showGameOver(){
         <button id="restartBtn" class="start-btn">RESTART</button>
       `;
       document.getElementById('restartBtn').onclick=()=>{
-        startGame(); gameOverOverlay.style.display='none';
+        startGame();
+        gameOverOverlay.style.display='none';
       };
     }
   });
 }
+
 function showGameOver_legacy(){
   // 元のゲームオーバー表示（もう使わない）
 }
