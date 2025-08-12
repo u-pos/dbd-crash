@@ -168,39 +168,41 @@ function scoreForMatch(count){
 }
 
 // 改良版: 縦列落下アニメーション付き
-function renderBoard(prevBoard){
-  boardEl.innerHTML='';
-  for(let i=0;i<board.length;i++){
-    const t=board[i];
-    const cell=document.createElement('div');
-    cell.className='cell';
-    cell.dataset.i=i;
-    if(t>0){
-      const img=document.createElement('img');
-      img.src=`tile${t}.png`;
-      if(prevBoard){
-        const [newR,newC] = rc(i);
-        if(prevBoard[i] === 0){
-          // 新しいタイル（最上段から）
-          img.style.transform = `translateY(-120%)`;
+function renderBoard(prevBoard) {
+  boardEl.innerHTML = '';
+  for (let i = 0; i < board.length; i++) {
+    const t = board[i];
+    const cell = document.createElement('div');
+    cell.className = 'cell';
+    cell.dataset.i = i;
+    if (t > 0) {
+      const img = document.createElement('img');
+      img.src = `tile${t}.png`;
+
+      if (prevBoard) {
+        const [newR, newC] = rc(i);
+        if (prevBoard[i] === 0) {
+          // 新規生成タイルは上から
+          img.style.transform = 'translateY(-120%)';
         } else {
-          // 同じ列内で落ちた距離を計算
-          for(let r0=0;r0<ROWS;r0++){
-            const idxOld = idx(r0,newC);
-            if(prevBoard[idxOld] === t){
+          // 列の上から探して移動前の位置を見つける
+          for (let r0 = 0; r0 < ROWS; r0++) {
+            const idxOld = idx(r0, newC);
+            if (prevBoard[idxOld] === t) {
               const drop = r0 - newR;
-              if(drop < 0){
-                img.style.transform = `translateY(${Math.abs(drop)*120}%)`;
+              if (drop < 0) {
+                img.style.transform = `translateY(${Math.abs(drop) * 100}%)`;
               }
               break;
             }
           }
         }
-        requestAnimationFrame(()=>{
-          img.style.transition='transform 0.35s ease';
-          img.style.transform='translateY(0)';
+        requestAnimationFrame(() => {
+          img.style.transition = 'transform 0.35s ease';
+          img.style.transform = 'translateY(0)';
         });
       }
+
       cell.appendChild(img);
     }
     boardEl.appendChild(cell);
