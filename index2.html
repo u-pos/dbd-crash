@@ -301,21 +301,26 @@ function findMatches(b){
   return Array.from(clear);
 }
 
-function collapseBoard(b){
-  const nb=b.slice();
-  for(let c=0;c<COLS;c++){
-    const col=[];
-    for(let r=0;r<ROWS;r++){
-      const v=nb[idx(r,c)];
-      if(v!==0) col.push(v);
+function collapseBoard(b) {
+  const nb = b.slice();
+  for (let c = 0; c < COLS; c++) {
+    let emptyRow = ROWS - 1; // 下から詰める
+    for (let r = ROWS - 1; r >= 0; r--) {
+      if (nb[idx(r, c)] !== 0) {
+        // タイルがある場合は emptyRow の位置に移動
+        nb[idx(emptyRow, c)] = nb[idx(r, c)];
+        if (emptyRow !== r) nb[idx(r, c)] = 0;
+        emptyRow--;
+      }
     }
-    const missing=ROWS-col.length;
-    const newTiles=Array.from({length:missing},()=>randInt(1,TILE_TYPES));
-    const newCol=newTiles.concat(col);
-    for(let r=0;r<ROWS;r++) nb[idx(r,c)]=newCol[r];
+    // 残った空きスペースに新タイルを追加（上から）
+    for (let r = emptyRow; r >= 0; r--) {
+      nb[idx(r, c)] = randInt(1, TILE_TYPES);
+    }
   }
   return nb;
 }
+
 
 function swapTiles(b,i1,i2){ const nb=b.slice(); [nb[i1],nb[i2]]=[nb[i2],nb[i1]]; return nb; }
 
