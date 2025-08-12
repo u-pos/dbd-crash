@@ -122,7 +122,7 @@ function escapeHtml(str){
 
 // ランキング読込
 function loadRanking(){
-  fetch('https://YOUR_DOMAIN/api/get_scores.php')
+  fetch('https://junkhin.com/api/get_scores.php')
     .then(r=>r.json())
     .then(data=>{
       if(data.success){
@@ -153,7 +153,7 @@ document.getElementById('closeRanking').addEventListener('click',()=>{
 // showGameOver差し替え
 function showGameOver(){
   bgm.pause();
-  fetch('https://YOUR_DOMAIN/api/check_rank.php',{
+  fetch('https://junkhin.com/api/check_rank.php',{
     method:'POST',
     headers:{'Content-Type':'application/x-www-form-urlencoded'},
     body:new URLSearchParams({score})
@@ -171,7 +171,7 @@ function showGameOver(){
       document.getElementById('saveNameBtn').onclick=()=>{
         const name=document.getElementById('playerName').value.trim();
         if(!name){alert('名前を入力してください');return;}
-        fetch('https://YOUR_DOMAIN/api/save_score.php',{
+        fetch('https://junkhin.com/api/save_score.php',{
           method:'POST',
           headers:{'Content-Type':'application/x-www-form-urlencoded'},
           body:new URLSearchParams({name,score})
