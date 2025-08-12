@@ -281,20 +281,38 @@ function waitForAnimations(elements,timeout=800){
   });
 }
 function startGame(){
-  // 全オーバーレイを強制非表示
   overlay.style.display='none';
   gameOverOverlay.style.display='none';
   document.getElementById('rankingOverlay').style.display='none';
-  bgm.currentTime=0; bgm.play().catch(()=>{});
-  board=generateBoard(); score=0; timeLeft=GAME\_TIME; combo=1; processing=false;
-  running=true; updateUI(); renderBoard();
-  sndStart.currentTime=0; sndStart.play();
-  timerId=setInterval(()=>{
+
+  score = 0;
+  timeLeft = GAME_TIME;
+  combo = 1;
+  processing = false;
+  running = true;
+
+  board = generateBoard();
+  renderBoard();
+
+  updateUI();
+
+  bgm.currentTime = 0;
+  bgm.play().catch(()=>{});
+  sndStart.currentTime = 0;
+  sndStart.play();
+
+  clearInterval(timerId);
+  timerId = setInterval(() => {
     timeLeft--;
-    if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); }
+    if (timeLeft <= 0) {
+      clearInterval(timerId);
+      running = false;
+      showGameOver();
+    }
     updateUI();
-  },1000);
+  }, 1000);
 }
+
 function updateUI(){
   scoreEl.textContent=score;
   timeEl.textContent=timeLeft;
