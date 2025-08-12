@@ -2,145 +2,42 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no" />
-<title>Match-3 Mobile Swipe</title>
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Match-3 Slide Animation</title>
 <style>
-:root {
-  --cols:8;
-  --rows:8;
-  --tile-size:11vw;
+:root { --cols:8; --rows:8; --tile-size:11vw; }
+html,body {
+  margin:0; padding:0; width:100%; height:100%;
+  overflow:hidden; overscroll-behavior:none;
+  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
+  background:#111; color:#fff; font-family:sans-serif;
 }
-html, body {
-  margin: 0;
-  padding: 0;
-  width: 100%;
-  height: 100%;                 /* 高さ100% */
-  overflow: hidden;             /* 横だけでなく縦スクロール禁止 */
-  overscroll-behavior: none;    /* モバイルのバウンス禁止 */
-  -webkit-touch-callout: none;
-  -webkit-user-select: none;
-  user-select: none;
-  background: #111;
-  color: white;
-  font-family: sans-serif;
+.wrap { display:flex; flex-direction:column; align-items:center; height:100%; }
+.header { display:flex; justify-content:space-between; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; width:90%; }
+.panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
+#combo { color:#ffde59; font-weight:900; font-size:4.4vw; }
+.board { position:relative; background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
+  padding:6px; border-radius:10px; 
+  width:calc(var(--tile-size)*var(--cols) + (var(--cols)-1)*4px);
+  height:calc(var(--tile-size)*var(--rows) + (var(--rows)-1)*4px);
 }
-.wrap {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.ui {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-}
-.header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 1.5vw;
-  font-size: 3.6vw;
-  font-weight: 600;
-}
-.panel {
-  background: rgba(255,255,255,0.04);
-  padding: 0.8vw 1.5vw;
-  border-radius: 12px;
-  min-width: 28vw;
-  text-align: center;
-}
-#combo { color: #ffde59; font-weight: 900; font-size: 4.4vw; }
-.board {
-  background: linear-gradient(180deg, rgba(255,255,255,0.03), transparent);
-  padding: 6px;
-  border-radius: 10px;
-  display: grid;
-  grid-template-columns: repeat(var(--cols), var(--tile-size));
-  gap: 4px;
-  touch-action: none;
-  box-sizing: border-box;
-}
-.cell {
-  width: var(--tile-size);
-  height: var(--tile-size);
-  border-radius: 8px;
-  overflow: hidden;
-  background: #111a2a;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-}
-.cell img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  pointer-events:none;
-}
-@keyframes vanish {
-  0% { transform: scale(1); opacity: 1; }
-  50% { transform: scale(1.25); opacity: 0.6; }
-  100% { transform: scale(0); opacity: 0; }
-}
-.vanish { animation: vanish 380ms cubic-bezier(.2,.9,.3,1) forwards; }
-.drop { transition: transform 420ms cubic-bezier(.2,.8,.3,1); }
-.start-overlay, #gameOverOverlay {
-  position: absolute; inset: 0;
-  display: flex; align-items: center; justify-content: center;
-  background: rgba(0,0,0,0.35);
-  border-radius: 10px; flex-direction: column; z-index: 10;
-}
-.start-btn {
-  background: linear-gradient(90deg,#ff7ab6,#7b61ff);
-  border: none;
-  padding: 14px 26px;
-  border-radius: 999px;
-  font-size: 1.8rem;
-  color: #fff;
-}
-#gameOverOverlay {
-  font-size: 10vw; font-weight: 900; color: #fff;
-  flex-wrap: wrap; gap: 1vw; text-align: center; line-height: 1.1;
-}
-.footer-row {
-  display: flex;
-  justify-content: flex-start;
-  gap: 1rem;
-  align-items: flex-start;
-}
-.rules-table table { border-collapse: collapse; }
-.right-buttons {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.3rem;
-}
-.icon-btn {
-  background: none;
-  border: none;
-  font-size: 2.8rem; /* 通常2remの1.4倍 */
-  color: white;
-  cursor: pointer;
-  line-height: 1;
-}
-.pause-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: black; /* 完全黒で盤面だけ隠す */
-  z-index: 20;
-}
-.pause-overlay button {
-  font-size: 2.5rem;
-}
+.cell { position:absolute; width:var(--tile-size); height:var(--tile-size); border-radius:8px; overflow:hidden; background:#111a2a; display:flex; align-items:center; justify-content:center; transition:transform 0.35s ease; }
+.cell img { width:100%; height:100%; object-fit:cover; pointer-events:none; }
+.start-overlay,#gameOverOverlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); border-radius:10px; flex-direction:column; z-index:10; }
+.start-btn { background:linear-gradient(90deg,#ff7ab6,#7b61ff); border:none; padding:14px 26px; border-radius:999px; font-size:1.8rem; color:#fff; cursor:pointer; }
+#gameOverOverlay { font-size:10vw; font-weight:900; color:#fff; flex-wrap:wrap; gap:1vw; text-align:center; line-height:1.1; }
+.bottom-buttons { display:flex; gap:1.5rem; margin-top:0.8rem; }
+.icon-btn { background:none; border:none; font-size:2.8rem; color:white; cursor:pointer; }
+.rules-table-fixed { margin-top:0.5rem; font-size:0.75rem; width:100%; }
+.rules-table-fixed table { width:100%; color:#fff; border-collapse:collapse; text-align:center; }
+.rules-table-fixed th,.rules-table-fixed td { border-bottom:1px solid #555; padding:0.2rem; }
+.rules-table-fixed th { border-bottom:2px solid #ffde59; }
+.pause-overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:black; z-index:20; flex-direction:column; color:white; font-size:1.5rem; }
+.pause-overlay button { font-size:2.5rem; margin-top:1rem; }
 </style>
 </head>
 <body>
 <div class="wrap">
-<div class="ui">
   <div class="header">
     <div class="panel">Score: <span id="score">0</span></div>
     <div class="panel">残り <span id="time">60</span> 秒</div>
@@ -151,37 +48,27 @@ html, body {
     <div id="overlay" class="start-overlay">
       <button id="startBtn" class="start-btn">START</button>
     </div>
-    <div id="pauseOverlay" class="pause-overlay" style="display:none;">
+    <div id="pauseOverlay" class="pause-overlay">
+      <div id="pauseText">一時停止中</div>
       <button id="resumeBtn" class="start-btn">▶</button>
     </div>
     <div id="gameOverOverlay" style="display:none;"></div>
   </div>
-  <div class="footer">
-    <div class="footer-row">
-      <div class="rules-table">
-        <table style="color:#fff; text-align:center;">
-          <thead>
-            <tr><th style="border-bottom: 2px solid #ffde59;">得点ルール</th>
-                <th style="border-bottom: 2px solid #ffde59;">内容</th></tr>
-          </thead>
-          <tbody>
-            <tr><td style="border-bottom: 1px solid #555;">3個消し</td><td style="border-bottom: 1px solid #555;">100点</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">4個消し</td><td style="border-bottom: 1px solid #555;">200点</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">5個消し</td><td style="border-bottom: 1px solid #555;">300点</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">2連鎖目</td><td style="border-bottom: 1px solid #555;">得点×2倍</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">3連鎖目</td><td style="border-bottom: 1px solid #555;">得点×3倍</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">⋮</td><td style="border-bottom: 1px solid #555;">⋮</td></tr>
-            <tr><td style="border-bottom: 1px solid #555;">10連鎖目</td><td style="border-bottom: 1px solid #555;">得点×10倍</td></tr>
-          </tbody>
-        </table>
-      </div>
-      <div class="right-buttons">
-        <button id="muteBtn" class="icon-btn">🔇</button>
-        <button id="pauseBtn" class="icon-btn">⏸</button>
-      </div>
-    </div>
+  <div class="bottom-buttons">
+    <button id="muteBtn" class="icon-btn">🔇</button>
+    <button id="pauseBtn" class="icon-btn">⏸</button>
   </div>
-</div>
+  <div class="rules-table-fixed">
+    <table>
+      <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>3個消し</td><td>100点</td></tr>
+        <tr><td>4個消し</td><td>300点</td></tr>
+        <tr><td>5個消し</td><td>500点</td></tr>
+        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍。<br>※4コンボ目で3個消えたら400点。</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <audio id="sndStart" src="s.mp3" preload="auto"></audio>
@@ -189,34 +76,25 @@ html, body {
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-// ===== ゲーム変数 =====
 const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60;
-let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId=null,combo=1,processing=false;
+let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
 const boardEl=document.getElementById('board');
-const scoreEl=document.getElementById('score');
-const timeEl=document.getElementById('time');
-const comboEl=document.getElementById('combo');
-const overlay=document.getElementById('overlay');
-const startBtn=document.getElementById('startBtn');
-const gameOverOverlay=document.getElementById('gameOverOverlay');
-const sndStart=document.getElementById('sndStart');
-const sndClear=document.getElementById('sndClear');
-const bgm=document.getElementById('bgm');
+const scoreEl=document.getElementById('score'); const timeEl=document.getElementById('time'); const comboEl=document.getElementById('combo');
+const overlay=document.getElementById('overlay'); const gameOverOverlay=document.getElementById('gameOverOverlay');
+const sndStart=document.getElementById('sndStart'); const sndClear=document.getElementById('sndClear'); const bgm=document.getElementById('bgm');
+const TILE_SIZE=boardEl.clientWidth/COLS - 4;  // gap補正
 bgm.volume=0.2;
 
-// ===== 基本関数 =====
 function idx(r,c){return r*COLS+c}
-function rc(i){return [Math.floor(i/COLS),i%COLS]}
+function rc(i){return [Math.floor(i/COLS), i%COLS]}
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
 
-// 盤面生成
 function generateBoard(){
   const b=new Array(ROWS*COLS).fill(0);
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
       while(true){
-        const t=randInt(1,TILE_TYPES);
-        b[idx(r,c)]=t;
+        const t=randInt(1,TILE_TYPES); b[idx(r,c)]=t;
         let bad=false;
         if(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t) bad=true;
         if(r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t) bad=true;
@@ -227,328 +105,203 @@ function generateBoard(){
   return b;
 }
 
-// マッチ探索
 function findMatches(b){
-  const toClear=new Set();
-  // 横
+  const clear=new Set();
   for(let r=0;r<ROWS;r++){
-    let runType=null,runStart=0,runLen=0;
+    let runT=null, runS=0, runL=0; 
     for(let c=0;c<COLS;c++){
       const t=b[idx(r,c)];
-      if(t===runType) runLen++;
-      else{
-        if(runType && runLen>=3){
-          for(let k=0;k<runLen;k++) toClear.add(idx(r,runStart+k));
-        }
-        runType=t; runStart=c; runLen=1;
-      }
+      if(t===runT) runL++;
+      else{ if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
+        runT=t; runS=c; runL=1; }
     }
-    if(runType && runLen>=3){
-      for(let k=0;k<runLen;k++) toClear.add(idx(r,runStart+k));
-    }
+    if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
   }
-  // 縦
   for(let c=0;c<COLS;c++){
-    let runType=null,runStart=0,runLen=0;
+    let runT=null, runS=0, runL=0; 
     for(let r=0;r<ROWS;r++){
       const t=b[idx(r,c)];
-      if(t===runType) runLen++;
-      else{
-        if(runType && runLen>=3){
-          for(let k=0;k<runLen;k++) toClear.add(idx(runStart+k,c));
-        }
-        runType=t; runStart=r; runLen=1;
-      }
+      if(t===runT) runL++;
+      else{ if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
+        runT=t; runS=r; runL=1; }
     }
-    if(runType && runLen>=3){
-      for(let k=0;k<runLen;k++) toClear.add(idx(runStart+k,c));
-    }
+    if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
   }
-  return Array.from(toClear);
+  return Array.from(clear);
 }
 
-// 落下処理
 function collapseBoard(b){
   const nb=b.slice();
   for(let c=0;c<COLS;c++){
-    const col=[];
-    for(let r=0;r<ROWS;r++){
-      const v=nb[idx(r,c)];
-      if(v!==0) col.push(v);
+    let emptyRow=ROWS-1;
+    for(let r=ROWS-1;r>=0;r--){
+      if(nb[idx(r,c)]!==0){
+        nb[idx(emptyRow,c)]=nb[idx(r,c)];
+        if(emptyRow!==r) nb[idx(r,c)]=0;
+        emptyRow--;
+      }
     }
-    const missing=ROWS-col.length;
-    const newTiles=Array.from({length: missing},()=> randInt(1,TILE_TYPES));
-    const newCol=newTiles.concat(col);
-    for(let r=0;r<ROWS;r++) nb[idx(r,c)]=newCol[r];
+    for(let r=emptyRow;r>=0;r--){
+      nb[idx(r,c)]=randInt(1,TILE_TYPES);
+    }
   }
-  return nb;
-}
-
-function swapTiles(b,i1,i2){
-  const nb=b.slice();
-  [nb[i1],nb[i2]]=[nb[i2],nb[i1]];
   return nb;
 }
 
 function scoreForMatch(count){
   switch(count){
     case 3:return 100;
-    case 4:return 200;
-    case 5:return 300;
-    default:return 0;
+    case 4:return 300;
+    case 5:return 500;
+    default:return 500+(count-5)*100;
   }
 }
 
-// 描画
+function createTile(r,c,type){
+  const div=document.createElement('div');
+  div.className='cell';
+  div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${r*(TILE_SIZE+4)}px)`;
+  const img=document.createElement('img');
+  img.src=`tile${type}.png`;
+  div.appendChild(img);
+  boardEl.appendChild(div);
+  return div;
+}
+
 function renderBoard(prevBoard){
-  boardEl.innerHTML='';
-  for(let i=0;i<board.length;i++){
-    const t=board[i];
-    const cell=document.createElement('div');
-    cell.className='cell';
-    cell.dataset.i=i;
-    if(t>0){
-      const img=document.createElement('img');
-      img.src=`tile${t}.png`;
-      if(prevBoard && prevBoard[i]===0){
-        img.style.transform='translateY(-120%)';
-        img.classList.add('drop');
-        requestAnimationFrame(()=> img.style.transform='translateY(0)');
-        img.addEventListener('transitionend',function te(){
-          img.classList.remove('drop');
-          img.style.transform='';
-          img.removeEventListener('transitionend', te);
-        });
+  if(!prevBoard){
+    boardEl.innerHTML='';
+    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) createTile(r,c,board[idx(r,c)]);
+    return;
+  }
+  [...boardEl.children].forEach(el=>el.remove());
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      const type=board[idx(r,c)];
+      const div=createTile(r,c,type);
+      if(prevBoard[idx(r,c)]===0){ // 新規生成 → 上から
+        div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${(r-1)*(TILE_SIZE+4)}px)`;
+        requestAnimationFrame(()=>div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${r*(TILE_SIZE+4)}px)`);
       }
-      cell.appendChild(img);
     }
-    boardEl.appendChild(cell);
   }
 }
-
-function waitForAnimations(elements,timeout=600){
-  return new Promise(res=>{
-    if(!elements||elements.length===0) return res();
-    let remaining=elements.length;
-    const onEnd=(ev)=>{
-      ev.currentTarget.removeEventListener('animationend', onEnd);
-      remaining--;
-      if(remaining<=0) res();
-    };
-    elements.forEach(el=>{
-      if(!el){ remaining--; return; }
-      el.addEventListener('animationend', onEnd);
-      setTimeout(()=>{remaining--; if(remaining<=0)res();}, timeout);
-    });
-  });
-}
-
-// ゲーム開始
-function startGame(){
-  bgm.currentTime=0; bgm.play().catch(()=>{});
-  board=generateBoard();
-  score=0; timeLeft=GAME_TIME; combo=1; processing=false;
-  running=true;
-  overlay.style.display='none';
-  gameOverOverlay.style.display='none';
-  updateUI();
-  renderBoard();
-  sndStart.currentTime=0; sndStart.play();
-  timerId=setInterval(()=>{
-    timeLeft--;
-    if(timeLeft<=0){
-      clearInterval(timerId);
-      running=false; showGameOver();
-    }
-    updateUI();
-  },1000);
-}
-
-function updateUI(){
-  scoreEl.textContent=score;
-  timeEl.textContent=timeLeft;
-  comboEl.textContent=combo>1 ? `${combo}コンボ！` : '';
-}
-
-function showGameOver(){
-  bgm.pause();
-  gameOverOverlay.style.display='flex';
-  gameOverOverlay.innerHTML=`<div>最終スコア</div>
-    <div style="font-size: 15vw; font-weight: 900;">${score}</div>
-    <button id="restartBtn" class="start-btn">RESTART</button>`;
-  overlay.style.display='none';
-  document.getElementById('restartBtn').addEventListener('click',()=>{
-    startGame(); gameOverOverlay.style.display='none';
-  });
-}
-
-function isAdjacent(i1,i2){
-  const [r1,c1]=rc(i1),[r2,c2]=rc(i2);
-  return (Math.abs(r1-r2)+Math.abs(c1-c2))===1;
-}
-
-async function playerMove(i1,i2){
-  if(!running||processing) return;
-  if(!isAdjacent(i1,i2)) return;
-  processing=true;
-  let newBoard=swapTiles(board,i1,i2);
-  let matches=findMatches(newBoard);
-  if(matches.length===0){
-    renderSwapAnimation(i1,i2,false);
-    await delay(350);
-    processing=false; return;
-  }
-  renderSwapAnimation(i1,i2,true);
-  board=newBoard;
-  sndClear.currentTime=0; sndClear.play();
-  let chain=0;
-  while(true){
-    matches=findMatches(board);
-    if(matches.length===0) break;
-    chain++;
-    sndClear.currentTime=0; sndClear.play();
-    const groups=groupMatches(board,matches);
-    let gained=0;
-    for(let g of groups){
-      gained+=scoreForMatch(g.length)*Math.min(chain,10);
-    }
-    score+=gained;
-    combo=Math.min(10,chain);
-    const imgEls=matches.map(i=>{
-      const cell=boardEl.querySelector(`.cell[data-i='${i}']`);
-      return cell?cell.querySelector('img'):null;
-    }).filter(Boolean);
-    imgEls.forEach(img=>{
-      img.classList.remove('vanish'); void img.offsetWidth;
-      img.classList.add('vanish');
-    });
-    await waitForAnimations(imgEls,500);
-    matches.forEach(i=> board[i]=0);
-    const prev=board.slice();
-    board=collapseBoard(board);
-    renderBoard(prev);
-    await delay(480);
-  }
-  updateUI(); processing=false;
-}
-
-function renderSwapAnimation(i1,i2,success){
-  const cells=boardEl.children;
-  const cell1=cells[i1],cell2=cells[i2];
-  if(!cell1||!cell2) return;
-  const pos1=cell1.getBoundingClientRect();
-  const pos2=cell2.getBoundingClientRect();
-  const dx=pos2.left-pos1.left;
-  const dy=pos2.top-pos1.top;
-  cell1.style.transition='transform 300ms ease';
-  cell2.style.transition='transform 300ms ease';
-  cell1.style.transform=`translate(${dx}px,${dy}px)`;
-  cell2.style.transform=`translate(${-dx}px,${-dy}px)`;
-  setTimeout(()=>{
-    cell1.style.transition=''; cell2.style.transition='';
-    cell1.style.transform=''; cell2.style.transform='';
-    if(!success) renderBoard();
-  },300);
-}
-
-function delay(ms){return new Promise(r=>setTimeout(r,ms));}
 
 function groupMatches(boardArr,indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
   for(let i of indices){
     const [r,c]=rc(i);
-    for(let [dr,dc] of dirs){
-      const nr=r+dr,nc=c+dc,ni=idx(nr,nc);
+    for(let[dr,dc] of dirs){
+      const nr=r+dr, nc=c+dc, ni=idx(nr,nc);
       if(indices.includes(ni)) adj[i].push(ni);
     }
   }
   const visited=new Set(),groups=[];
   for(let i of indices){
     if(visited.has(i)) continue;
-    const q=[i],g=[];
+    const q=[i], group=[];
     while(q.length){
       const cur=q.shift();
       if(visited.has(cur)) continue;
-      visited.add(cur); g.push(cur);
+      visited.add(cur); group.push(cur);
       for(let n of adj[cur]) if(!visited.has(n)) q.push(n);
     }
-    groups.push(g);
+    groups.push(group);
   }
   return groups;
 }
 
-// タッチ操作
-let touchStartIndex=null,touchStartX=0,touchStartY=0;
+async function playerMove(i1,i2){
+  if(!running||processing) return;
+  const [r1,c1]=rc(i1),[r2,c2]=rc(i2);
+  if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
+  processing=true;
+  board=swapTiles(board,i1,i2);
+  let matches=findMatches(board);
+  if(!matches.length){renderBoard(); processing=false; return;}
+  sndClear.play();
+  let chain=0;
+  while(matches.length){
+    chain++;
+    const groups=groupMatches(board,matches);
+    let gained=0;
+    for(let g of groups) gained+=scoreForMatch(g.length)*Math.min(chain,10);
+    score+=gained; combo=Math.min(10,chain);
+    matches.forEach(i=>board[i]=0);
+    const prev=board.slice();
+    board=collapseBoard(board);
+    renderBoard(prev);
+    await new Promise(r=>setTimeout(r,400));
+    matches=findMatches(board);
+  }
+  updateUI(); processing=false;
+}
+
+function swapTiles(b,i1,i2){const nb=b.slice();[nb[i1],nb[i2]]=[nb[i2],nb[i1]];return nb;}
+
+function startGame(){
+  bgm.currentTime=0; bgm.play().catch(()=>{});
+  board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false; running=true;
+  overlay.style.display='none'; gameOverOverlay.style.display='none';
+  updateUI(); renderBoard();
+  sndStart.play();
+  timerId=setInterval(()=>{
+    timeLeft--; if(timeLeft<=0){clearInterval(timerId); running=false; showGameOver();}
+    updateUI();
+  },1000);
+}
+
+function updateUI(){
+  scoreEl.textContent=score; timeEl.textContent=timeLeft;
+  comboEl.textContent=combo>1?`${combo}コンボ！`:'';
+}
+
+function showGameOver(){
+  bgm.pause();
+  gameOverOverlay.style.display='flex';
+  gameOverOverlay.innerHTML=`<div>最終スコア</div><div style="font-size:15vw; font-weight:900;">${score}</div><button id="restartBtn" class="start-btn">RESTART</button>`;
+  document.getElementById('restartBtn').onclick=()=>{startGame(); gameOverOverlay.style.display='none';};
+}
+
+let touchStartIndex=null, startX=0, startY=0;
 boardEl.addEventListener('touchstart',e=>{
   if(!running||processing) return;
-  const t=e.target.closest('.cell'); if(!t) return;
-  touchStartIndex=Number(t.dataset.i);
-  touchStartX=e.touches[0].clientX;
-  touchStartY=e.touches[0].clientY;
-  e.preventDefault();
+  const cell=e.target.closest('.cell'); if(!cell) return;
+  const pos=[...boardEl.children].indexOf(cell);
+  touchStartIndex=pos; startX=e.touches[0].clientX; startY=e.touches[0].clientY;
 },{passive:false});
 boardEl.addEventListener('touchend',e=>{
-  if(touchStartIndex===null||!running||processing){ touchStartIndex=null; return; }
-  const touch=e.changedTouches[0];
-  const dx=touch.clientX-touchStartX;
-  const dy=touch.clientY-touchStartY;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<20){ touchStartIndex=null; return; }
+  if(touchStartIndex==null||!running||processing) return;
+  const dx=e.changedTouches[0].clientX-startX;
+  const dy=e.changedTouches[0].clientY-startY;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20) return;
   const [r,c]=rc(touchStartIndex); let tr=r,tc=c;
-  if(Math.abs(dx)>Math.abs(dy)) tc += (dx>0)?1:-1;
-  else tr += (dy>0)?1:-1;
-  if(tr<0||tr>=ROWS||tc<0||tc>=COLS){ touchStartIndex=null; return; }
-  playerMove(touchStartIndex,idx(tr,tc));
+  if(Math.abs(dx)>Math.abs(dy)) tc+=(dx>0?1:-1);
+  else tr+=(dy>0?1:-1);
+  if(tr>=0&&tr<ROWS&&tc>=0&&tc<COLS) playerMove(touchStartIndex,idx(tr,tc));
   touchStartIndex=null;
 },{passive:false});
 
-// 初期描画
-function renderBoardInitial(){ board=generateBoard(); renderBoard(); }
-renderBoardInitial();
-updateUI();
-startBtn.addEventListener('click', startGame);
-
-// 一時停止
-const pauseBtn=document.getElementById('pauseBtn');
-const pauseOverlay=document.getElementById('pauseOverlay');
-const resumeBtn=document.getElementById('resumeBtn');
-pauseBtn.addEventListener('click',()=>{
-  if(!running) return;
-  clearInterval(timerId);
-  running=false;
-  bgm.pause();
-  pauseOverlay.style.display='flex';
-});
-resumeBtn.addEventListener('click',()=>{
-  running=true;
-  pauseOverlay.style.display='none';
-  bgm.play().catch(()=>{});
-  timerId=setInterval(()=>{
-    timeLeft--;
-    if(timeLeft<=0){
-      clearInterval(timerId);
-      running=false;
-      showGameOver();
-    }
-    updateUI();
-  },1000);
-});
-
-// ミュート
-const muteBtn=document.getElementById('muteBtn');
+document.getElementById('startBtn').onclick=startGame;
+document.getElementById('muteBtn').onclick=()=>{
+  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
+  document.getElementById('muteBtn').textContent=muted?'🔈':'🔇';
+};
 let muted=false;
-muteBtn.addEventListener('click',()=>{
-  muted=!muted;
-  bgm.muted=muted;
-  sndClear.muted=muted;
-  sndStart.muted=muted;
-  muteBtn.textContent = muted ? '🔈' : '🔇';
-});
+document.getElementById('pauseBtn').onclick=()=>{
+  if(!running)return;
+  clearInterval(timerId); running=false; bgm.pause();
+  document.getElementById('pauseText').textContent='一時停止中';
+  document.getElementById('pauseOverlay').style.display='flex';
+};
+document.getElementById('resumeBtn').onclick=()=>{
+  running=true; document.getElementById('pauseOverlay').style.display='none';
+  bgm.play().catch(()=>{});
+  timerId=setInterval(()=>{timeLeft--; if(timeLeft<=0){clearInterval(timerId); running=false; showGameOver();} updateUI();},1000);
+};
 
-// 縦スクロール防止（iOS/Android）
-document.addEventListener('touchmove', function(event) {
-  event.preventDefault();
-}, { passive: false });
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 </script>
 </body>
 </html>
