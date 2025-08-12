@@ -2,38 +2,148 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Match-3 Slide Animation</title>
+<meta name="viewport"
+      content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<title>Match-3 Slide Animation Fixed</title>
 <style>
-:root { --cols:8; --rows:8; --tile-size:11vw; }
-html,body {
-  margin:0; padding:0; width:100%; height:100%;
-  overflow:hidden; overscroll-behavior:none;
-  -webkit-touch-callout:none; -webkit-user-select:none; user-select:none;
-  background:#111; color:#fff; font-family:sans-serif;
+:root {
+  --cols: 8;
+  --rows: 8;
+  --tile-size: 11vw; /* セル幅をCSS変数管理 */
 }
-.wrap { display:flex; flex-direction:column; align-items:center; height:100%; }
-.header { display:flex; justify-content:space-between; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; width:90%; }
-.panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
-#combo { color:#ffde59; font-weight:900; font-size:4.4vw; }
-.board { position:relative; background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
-  padding:6px; border-radius:10px; 
+html, body {
+  margin:0; padding:0;
+  width:100%; height:100%;
+  overflow:hidden;
+  overscroll-behavior:none;
+  -webkit-touch-callout:none;
+  -webkit-user-select:none;
+  user-select:none;
+  background:#111;
+  color:#fff;
+  font-family:sans-serif;
+}
+.wrap {
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  height:100%;
+}
+.header {
+  display:flex;
+  justify-content:space-between;
+  margin-bottom:1.5vw;
+  font-size:3.6vw;
+  font-weight:600;
+  width:90%;
+}
+.panel {
+  background:rgba(255,255,255,0.04);
+  padding:0.8vw 1.5vw;
+  border-radius:12px;
+  min-width:28vw;
+  text-align:center;
+}
+#combo {color:#ffde59; font-weight:900; font-size:4.4vw;}
+.board {
+  position:relative;
+  background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
+  padding:6px;
+  border-radius:10px;
   width:calc(var(--tile-size)*var(--cols) + (var(--cols)-1)*4px);
   height:calc(var(--tile-size)*var(--rows) + (var(--rows)-1)*4px);
 }
-.cell { position:absolute; width:var(--tile-size); height:var(--tile-size); border-radius:8px; overflow:hidden; background:#111a2a; display:flex; align-items:center; justify-content:center; transition:transform 0.35s ease; }
-.cell img { width:100%; height:100%; object-fit:cover; pointer-events:none; }
-.start-overlay,#gameOverOverlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.35); border-radius:10px; flex-direction:column; z-index:10; }
-.start-btn { background:linear-gradient(90deg,#ff7ab6,#7b61ff); border:none; padding:14px 26px; border-radius:999px; font-size:1.8rem; color:#fff; cursor:pointer; }
-#gameOverOverlay { font-size:10vw; font-weight:900; color:#fff; flex-wrap:wrap; gap:1vw; text-align:center; line-height:1.1; }
-.bottom-buttons { display:flex; gap:1.5rem; margin-top:0.8rem; }
-.icon-btn { background:none; border:none; font-size:2.8rem; color:white; cursor:pointer; }
-.rules-table-fixed { margin-top:0.5rem; font-size:0.75rem; width:100%; }
-.rules-table-fixed table { width:100%; color:#fff; border-collapse:collapse; text-align:center; }
-.rules-table-fixed th,.rules-table-fixed td { border-bottom:1px solid #555; padding:0.2rem; }
-.rules-table-fixed th { border-bottom:2px solid #ffde59; }
-.pause-overlay { position:absolute; inset:0; display:none; align-items:center; justify-content:center; background:black; z-index:20; flex-direction:column; color:white; font-size:1.5rem; }
-.pause-overlay button { font-size:2.5rem; margin-top:1rem; }
+.cell {
+  position:absolute;
+  border-radius:8px;
+  overflow:hidden;
+  background:#111a2a;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:transform 0.35s ease;
+}
+.cell img {
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  pointer-events:none;
+}
+.start-overlay, #gameOverOverlay {
+  position:absolute;
+  inset:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(0,0,0,0.35);
+  border-radius:10px;
+  flex-direction:column;
+  z-index:10;
+}
+.start-btn {
+  background:linear-gradient(90deg,#ff7ab6,#7b61ff);
+  border:none;
+  padding:14px 26px;
+  border-radius:999px;
+  font-size:1.8rem;
+  color:#fff;
+  cursor:pointer;
+}
+#gameOverOverlay {
+  font-size:10vw;
+  font-weight:900;
+  color:#fff;
+  flex-wrap:wrap;
+  gap:1vw;
+  text-align:center;
+  line-height:1.1;
+}
+.bottom-buttons {
+  display:flex;
+  gap:1.5rem;
+  margin-top:0.8rem;
+}
+.icon-btn {
+  background:none;
+  border:none;
+  font-size:2.8rem;
+  color:white;
+  cursor:pointer;
+}
+.rules-table-fixed {
+  margin-top:0.5rem;
+  font-size:0.75rem;
+  width:100%;
+}
+.rules-table-fixed table {
+  width:100%;
+  color:#fff;
+  border-collapse:collapse;
+  text-align:center;
+}
+.rules-table-fixed th, .rules-table-fixed td {
+  border-bottom:1px solid #555;
+  padding:0.2rem;
+}
+.rules-table-fixed th {
+  border-bottom:2px solid #ffde59;
+}
+.pause-overlay {
+  position:absolute;
+  inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  background:black;
+  z-index:20;
+  flex-direction:column;
+  color:white;
+  font-size:1.5rem;
+}
+.pause-overlay button {
+  font-size:2.5rem;
+  margin-top:1rem;
+}
 </style>
 </head>
 <body>
@@ -65,7 +175,7 @@ html,body {
         <tr><td>3個消し</td><td>100点</td></tr>
         <tr><td>4個消し</td><td>300点</td></tr>
         <tr><td>5個消し</td><td>500点</td></tr>
-        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍。<br>※4コンボ目で3個消えたら400点。</td></tr>
+        <tr><td colspan="2">2コンボ目=×2、3コンボ目=×3… 4コンボで3個消しなら400点。</td></tr>
       </tbody>
     </table>
   </div>
@@ -76,14 +186,22 @@ html,body {
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60;
-let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
+const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
+let board=[], running=false, score=0, timeLeft=GAME_TIME, timerId, combo=1, processing=false;
 const boardEl=document.getElementById('board');
-const scoreEl=document.getElementById('score'); const timeEl=document.getElementById('time'); const comboEl=document.getElementById('combo');
-const overlay=document.getElementById('overlay'); const gameOverOverlay=document.getElementById('gameOverOverlay');
-const sndStart=document.getElementById('sndStart'); const sndClear=document.getElementById('sndClear'); const bgm=document.getElementById('bgm');
-const TILE_SIZE=boardEl.clientWidth/COLS - 4;  // gap補正
+const scoreEl=document.getElementById('score'); 
+const timeEl=document.getElementById('time'); 
+const comboEl=document.getElementById('combo');
+const overlay=document.getElementById('overlay');
+const gameOverOverlay=document.getElementById('gameOverOverlay');
+const sndStart=document.getElementById('sndStart');
+const sndClear=document.getElementById('sndClear');
+const bgm=document.getElementById('bgm');
 bgm.volume=0.2;
+
+// セルサイズとgap
+const cellSize = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--tile-size'));
+const gap = 4;
 
 function idx(r,c){return r*COLS+c}
 function rc(i){return [Math.floor(i/COLS), i%COLS]}
@@ -94,7 +212,8 @@ function generateBoard(){
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
       while(true){
-        const t=randInt(1,TILE_TYPES); b[idx(r,c)]=t;
+        const t=randInt(1,TILE_TYPES);
+        b[idx(r,c)]=t;
         let bad=false;
         if(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t) bad=true;
         if(r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t) bad=true;
@@ -107,23 +226,29 @@ function generateBoard(){
 
 function findMatches(b){
   const clear=new Set();
+  // 横方向
   for(let r=0;r<ROWS;r++){
-    let runT=null, runS=0, runL=0; 
+    let runT=null,runS=0,runL=0;
     for(let c=0;c<COLS;c++){
       const t=b[idx(r,c)];
-      if(t===runT) runL++;
-      else{ if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
-        runT=t; runS=c; runL=1; }
+      if(t===runT)runL++;
+      else{
+        if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
+        runT=t; runS=c; runL=1;
+      }
     }
     if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
   }
+  // 縦方向
   for(let c=0;c<COLS;c++){
-    let runT=null, runS=0, runL=0; 
+    let runT=null,runS=0,runL=0;
     for(let r=0;r<ROWS;r++){
       const t=b[idx(r,c)];
-      if(t===runT) runL++;
-      else{ if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
-        runT=t; runS=r; runL=1; }
+      if(t===runT)runL++;
+      else{
+        if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
+        runT=t; runS=r; runL=1;
+      }
     }
     if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
   }
@@ -136,13 +261,13 @@ function collapseBoard(b){
     let emptyRow=ROWS-1;
     for(let r=ROWS-1;r>=0;r--){
       if(nb[idx(r,c)]!==0){
-        nb[idx(emptyRow,c)]=nb[idx(r,c)];
+        nb[idx(emptyRow,c)] = nb[idx(r,c)];
         if(emptyRow!==r) nb[idx(r,c)]=0;
         emptyRow--;
       }
     }
     for(let r=emptyRow;r>=0;r--){
-      nb[idx(r,c)]=randInt(1,TILE_TYPES);
+      nb[idx(r,c)] = randInt(1,TILE_TYPES);
     }
   }
   return nb;
@@ -160,7 +285,9 @@ function scoreForMatch(count){
 function createTile(r,c,type){
   const div=document.createElement('div');
   div.className='cell';
-  div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${r*(TILE_SIZE+4)}px)`;
+  div.style.width=`${cellSize}px`;
+  div.style.height=`${cellSize}px`;
+  div.style.transform=`translate(${c*(cellSize+gap)}px, ${r*(cellSize+gap)}px)`;
   const img=document.createElement('img');
   img.src=`tile${type}.png`;
   div.appendChild(img);
@@ -169,19 +296,16 @@ function createTile(r,c,type){
 }
 
 function renderBoard(prevBoard){
-  if(!prevBoard){
-    boardEl.innerHTML='';
-    for(let r=0;r<ROWS;r++) for(let c=0;c<COLS;c++) createTile(r,c,board[idx(r,c)]);
-    return;
-  }
-  [...boardEl.children].forEach(el=>el.remove());
+  boardEl.innerHTML='';
   for(let r=0;r<ROWS;r++){
     for(let c=0;c<COLS;c++){
-      const type=board[idx(r,c)];
-      const div=createTile(r,c,type);
-      if(prevBoard[idx(r,c)]===0){ // 新規生成 → 上から
-        div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${(r-1)*(TILE_SIZE+4)}px)`;
-        requestAnimationFrame(()=>div.style.transform=`translate(${c*(TILE_SIZE+4)}px, ${r*(TILE_SIZE+4)}px)`);
+      const t=board[idx(r,c)];
+      const tile=createTile(r,c,t);
+      if(prevBoard && prevBoard[idx(r,c)]===0){
+        tile.style.transform=`translate(${c*(cellSize+gap)}px, ${(r-1)*(cellSize+gap)}px)`;
+        requestAnimationFrame(()=>{
+          tile.style.transform=`translate(${c*(cellSize+gap)}px, ${r*(cellSize+gap)}px)`;
+        });
       }
     }
   }
@@ -193,11 +317,11 @@ function groupMatches(boardArr,indices){
   for(let i of indices){
     const [r,c]=rc(i);
     for(let[dr,dc] of dirs){
-      const nr=r+dr, nc=c+dc, ni=idx(nr,nc);
+      const nr=r+dr,nc=c+dc,ni=idx(nr,nc);
       if(indices.includes(ni)) adj[i].push(ni);
     }
   }
-  const visited=new Set(),groups=[];
+  const visited=new Set(), groups=[];
   for(let i of indices){
     if(visited.has(i)) continue;
     const q=[i], group=[];
@@ -213,7 +337,7 @@ function groupMatches(boardArr,indices){
 }
 
 async function playerMove(i1,i2){
-  if(!running||processing) return;
+  if(!running||processing)return;
   const [r1,c1]=rc(i1),[r2,c2]=rc(i2);
   if(Math.abs(r1-r2)+Math.abs(c1-c2)!==1) return;
   processing=true;
@@ -232,7 +356,7 @@ async function playerMove(i1,i2){
     const prev=board.slice();
     board=collapseBoard(board);
     renderBoard(prev);
-    await new Promise(r=>setTimeout(r,400));
+    await new Promise(r=>setTimeout(r,350));
     matches=findMatches(board);
   }
   updateUI(); processing=false;
@@ -264,18 +388,20 @@ function showGameOver(){
   document.getElementById('restartBtn').onclick=()=>{startGame(); gameOverOverlay.style.display='none';};
 }
 
-let touchStartIndex=null, startX=0, startY=0;
+// タッチ操作
+let touchStartIndex=null,startX=0,startY=0;
 boardEl.addEventListener('touchstart',e=>{
-  if(!running||processing) return;
-  const cell=e.target.closest('.cell'); if(!cell) return;
-  const pos=[...boardEl.children].indexOf(cell);
-  touchStartIndex=pos; startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+  if(!running||processing)return;
+  const idxTile=[...boardEl.children].indexOf(e.target.closest('.cell'));
+  if(idxTile<0)return;
+  touchStartIndex=idxTile;
+  startX=e.touches[0].clientX; startY=e.touches[0].clientY;
 },{passive:false});
 boardEl.addEventListener('touchend',e=>{
-  if(touchStartIndex==null||!running||processing) return;
+  if(touchStartIndex==null||!running||processing)return;
   const dx=e.changedTouches[0].clientX-startX;
   const dy=e.changedTouches[0].clientY-startY;
-  if(Math.max(Math.abs(dx),Math.abs(dy))<20) return;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20)return;
   const [r,c]=rc(touchStartIndex); let tr=r,tc=c;
   if(Math.abs(dx)>Math.abs(dy)) tc+=(dx>0?1:-1);
   else tr+=(dy>0?1:-1);
@@ -284,11 +410,12 @@ boardEl.addEventListener('touchend',e=>{
 },{passive:false});
 
 document.getElementById('startBtn').onclick=startGame;
+let muted=false;
 document.getElementById('muteBtn').onclick=()=>{
-  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
+  muted=!muted;
+  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
   document.getElementById('muteBtn').textContent=muted?'🔈':'🔇';
 };
-let muted=false;
 document.getElementById('pauseBtn').onclick=()=>{
   if(!running)return;
   clearInterval(timerId); running=false; bgm.pause();
@@ -298,10 +425,13 @@ document.getElementById('pauseBtn').onclick=()=>{
 document.getElementById('resumeBtn').onclick=()=>{
   running=true; document.getElementById('pauseOverlay').style.display='none';
   bgm.play().catch(()=>{});
-  timerId=setInterval(()=>{timeLeft--; if(timeLeft<=0){clearInterval(timerId); running=false; showGameOver();} updateUI();},1000);
+  timerId=setInterval(()=>{
+    timeLeft--; if(timeLeft<=0){clearInterval(timerId); running=false; showGameOver();}
+    updateUI();
+  },1000);
 };
 
-document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
 </script>
 </body>
 </html>
