@@ -312,7 +312,7 @@ function showGameOver(){
         <input type="text" id="playerName" maxlength="50" placeholder="名前を入力" style="font-size:5vw;padding:5px;margin:1rem 0;">
         <button id="saveNameBtn" class="start-btn">登録</button>
       `;
- document.getElementById('saveNameBtn').onclick=()=>{
+      document.getElementById('saveNameBtn').onclick=()=>{
         const name=document.getElementById('playerName').value.trim();
         if(!name){alert('名前を入力してください');return;}
         // 登録ボタンを無効化して二重送信を防ぐ
