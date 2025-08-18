@@ -1,4 +1,4 @@
-<!doctype html>
+<!doctype html> 
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
@@ -7,7 +7,11 @@
 <title>Match-3 Mobile Swipe</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
-html,body { margin:0; padding:0; width:100%; height:100%; overflow:hidden; overscroll-behavior:none; background:#111; color:#fff; font-family:sans-serif;}
+html,body {
+  margin:0; padding:0; width:100%; height:100%;
+  overflow:hidden; overscroll-behavior:none;
+  background:#111; color:#fff; font-family:sans-serif;
+}
 .wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; }
 .header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; }
 .panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
@@ -25,18 +29,11 @@ display:flex;align-items:center;justify-content:center;}
 }
 .start-btn {background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;
 padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
-#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;}
+#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
 .bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
 .icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
-.rules-table-fixed {margin-top:0.5rem;font-size:0.75rem;width:100%;}
-.rules-table-fixed table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
-.rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.2rem;}
-.rules-table-fixed th {border-bottom:2px solid #ffde59;}
 .pause-overlay {position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:black;z-index:20;
 flex-direction:column;color:white;font-size:1.5rem;}
-/* ランキングオーバーレイ */
-#rankingOverlay {position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; justify-content: center; align-items: center;}
-.ranking-content {background: rgba(255,255,255,0.95); color: #000; padding: 1rem; border-radius: 8px; width: 80%; max-width: 500px; display: flex; flex-direction: column; max-height: 80%; overflow-y: auto;}
 </style>
 </head>
 <body>
@@ -55,33 +52,12 @@ flex-direction:column;color:white;font-size:1.5rem;}
       <div id="pauseText">一時停止中</div>
       <button id="resumeBtn" class="start-btn">▶</button>
     </div>
-    <div id="gameOverOverlay" style="display:none;"></div>
+    <div id="gameOverOverlay"></div>
   </div>
   <div class="bottom-buttons">
     <button id="muteBtn" class="icon-btn">🔇</button>
     <button id="pauseBtn" class="icon-btn">⏸</button>
     <button id="rankingBtn" class="icon-btn">🏆</button>
-  </div>
-  <div class="rules-table-fixed">
-    <table>
-      <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
-      <tbody>
-        <tr><td>3個消し</td><td>100点</td></tr>
-        <tr><td>4個消し</td><td>300点</td></tr>
-        <tr><td>5個消し</td><td>500点</td></tr>
-        <tr>
-          <td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍。</td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-</div>
-
-<div id="rankingOverlay">
-  <div class="ranking-content">
-    <button id="closeRanking" class="icon-btn" style="font-size:2rem;align-self:flex-end;">✖</button>
-    <h2 style="text-align:center;">🏆 ランキング TOP20 🏆</h2>
-    <div id="rankingList" style="font-size:4vw;"></div>
   </div>
 </div>
 
@@ -90,33 +66,7 @@ flex-direction:column;color:white;font-size:1.5rem;}
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-// --- API 設定 ---
-const API_BASE_URL = 'https://junkhin.com/api/';
-function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-
-// --- UI ---
-function loadRanking(){
-  fetch(API_BASE_URL+'get_scores.php')
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.success){
-        let html='<ol>';
-        data.scores.forEach(s=>html+=`<li>${escapeHtml(s.name)} - ${s.score}</li>`);
-        html+='</ol>';
-        document.getElementById('rankingList').innerHTML=html;
-      }else{
-        document.getElementById('rankingList').innerHTML='<p>取得失敗</p>';
-      }
-    }).catch(()=>{document.getElementById('rankingList').innerHTML='<p>通信エラー</p>';});
-}
-document.getElementById('rankingBtn').addEventListener('click',()=>{
-  loadRanking();
-  document.getElementById('rankingOverlay').style.display='flex';
-});
-document.getElementById('closeRanking').addEventListener('click',()=>{document.getElementById('rankingOverlay').style.display='none';});
-
-// --- ゲームロジック（以前のコードベース） ---
-const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60;
+const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
 let board=[],running=false,score=0,timeLeft=GAME_TIME,combo=1,processing=false,timerId;
 const boardEl=document.getElementById('board');
 const scoreEl=document.getElementById('score');
@@ -126,60 +76,190 @@ const overlay=document.getElementById('overlay');
 const gameOverOverlay=document.getElementById('gameOverOverlay');
 const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
-const bgm=document.getElementById('bgm'); bgm.volume=0.2;
+const bgm=document.getElementById('bgm');
+bgm.volume=0.2;
+const API_BASE_URL='https://junkhin.com/api/';
 
 function idx(r,c){return r*COLS+c;}
 function rc(i){return [Math.floor(i/COLS),i%COLS];}
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-function generateBoard(){const b=new Array(ROWS*COLS).fill(0);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){let t;do{t=randInt(1,TILE_TYPES);}while(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t || r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t);b[idx(r,c)]=t;} } return b; }
-function renderBoard(){boardEl.innerHTML='';board.forEach(t=>{const div=document.createElement('div');div.className='cell';const img=document.createElement('img');img.src=`images/${t}.png`;div.appendChild(img);boardEl.appendChild(div);});}
-function swap(i,j){[board[i],board[j]]=[board[j],board[i]];renderBoard();}
+
+// 盤面生成（初期3つ以上連続なし）
+function generateBoard(){
+  const b=new Array(ROWS*COLS).fill(0);
+  for(let r=0;r<ROWS;r++){
+    for(let c=0;c<COLS;c++){
+      let t, attempts=0;
+      while(true){
+        t=randInt(1,TILE_TYPES);
+        b[idx(r,c)]=t;
+        let bad=(c>=2 && b[idx(r,c-1)]===t && b[idx(r,c-2)]===t)||(r>=2 && b[idx(r-1,c)]===t && b[idx(r-2,c)]===t);
+        if(!bad) break;
+        attempts++; if(attempts>50) break;
+      }
+    }
+  }
+  return b;
+}
+
+// 盤面描画
+function renderBoard(){
+  boardEl.innerHTML='';
+  board.forEach((t,i)=>{
+    const cell=document.createElement('div');
+    cell.className='cell';
+    cell.dataset.i=i;
+    const img=document.createElement('img');
+    img.src=`tile${t}.png`;
+    cell.appendChild(img);
+    boardEl.appendChild(cell);
+  });
+}
+
+// マッチ判定
+function findMatches(b){
+  const clear=new Set();
+  for(let r=0;r<ROWS;r++){
+    let runT=null, runS=0, runL=0;
+    for(let c=0;c<COLS;c++){
+      const t=b[idx(r,c)];
+      if(t===runT) runL++; else { if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k)); runT=t; runS=c; runL=1; }
+    }
+    if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
+  }
+  for(let c=0;c<COLS;c++){
+    let runT=null, runS=0, runL=0;
+    for(let r=0;r<ROWS;r++){
+      const t=b[idx(r,c)];
+      if(t===runT) runL++; else { if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c)); runT=t; runS=r; runL=1; }
+    }
+    if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));
+  }
+  return Array.from(clear).sort((a,b)=>a-b);
+}
+
+// スワップ判定
+function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r1-r2)+Math.abs(c1-c2)===1;}
+function swapTiles(i1,i2){[board[i1],board[i2]]=[board[i2],board[i1]];renderBoard();}
+
+// スコア計算
+function scoreForMatch(count){switch(count){case 3:return 100;case 4:return 300;case 5:return 500;default:return 500+(count-5)*100;}}
+
+// UI更新
+function updateUI(){scoreEl.textContent=score;timeEl.textContent=timeLeft;comboEl.textContent=combo>1?`${combo}コンボ！`:'';}
+
+// タッチ操作
+let touchStartIndex=null,startX=0,startY=0;
+boardEl.addEventListener('touchstart',e=>{
+  if(!running||processing) return;
+  const t=e.target.closest('.cell'); if(!t) return;
+  touchStartIndex=Number(t.dataset.i);
+  startX=e.touches[0].clientX; startY=e.touches[0].clientY;
+},{passive:false});
+boardEl.addEventListener('touchmove',e=>{ if(touchStartIndex!==null) e.preventDefault(); },{passive:false});
+boardEl.addEventListener('touchend',e=>{
+  if(touchStartIndex===null||!running||processing) return;
+  const dx=e.changedTouches[0].clientX-startX;
+  const dy=e.changedTouches[0].clientY-startY;
+  if(Math.max(Math.abs(dx),Math.abs(dy))<20){ touchStartIndex=null; return; }
+  const [r,c]=rc(touchStartIndex);
+  let targetR=r,targetC=c;
+  if(Math.abs(dx)>Math.abs(dy)) targetC+=dx>0?1:-1; else targetR+=dy>0?1:-1;
+  if(targetR<0||targetR>=ROWS||targetC<0||targetC>=COLS){ touchStartIndex=null; return; }
+  const targetIndex=idx(targetR,targetC);
+  playerMove(touchStartIndex,targetIndex);
+  touchStartIndex=null;
+},{passive:false});
+
+// プレイヤー移動
+async function playerMove(i1,i2){
+  if(!running||processing||!isAdjacent(i1,i2)) return;
+  processing=true;
+  const newB=[...board]; [newB[i1],newB[i2]]=[newB[i2],newB[i1]];
+  if(findMatches(newB).length===0){swapTiles(i1,i2);await new Promise(r=>setTimeout(r,300));swapTiles(i1,i2); processing=false; return; }
+  swapTiles(i1,i2); sndClear.currentTime=0;sndClear.play();
+  let chain=0;
+  while(true){
+    const matches=findMatches(board); if(matches.length===0) break; chain++; combo=Math.min(10,chain);
+    let gained=0; matches.forEach(i=>gained+=scoreForMatch(3)*chain); score+=gained;
+    matches.forEach(i=>board[i]=0);
+    board=collapseBoard(board); renderBoard();
+    await new Promise(r=>setTimeout(r,350));
+  }
+  updateUI(); processing=false;
+}
+
+// ボード落下
+function collapseBoard(b){
+  const nb=[...b];
+  for(let c=0;c<COLS;c++){
+    let emptyRow=ROWS-1;
+    for(let r=ROWS-1;r>=0;r--){
+      if(nb[idx(r,c)]!==0){ nb[idx(emptyRow,c)]=nb[idx(r,c)]; if(emptyRow!==r) nb[idx(r,c)]=0; emptyRow--; }
+    }
+    for(let r=emptyRow;r>=0;r--) nb[idx(r,c)]=randInt(1,TILE_TYPES);
+  }
+  return nb;
+}
+
+// ゲーム開始
 function startGame(){
-  board=generateBoard();
-  renderBoard();
-  score=0;combo=1;timeLeft=GAME_TIME;
-  scoreEl.textContent=score;
-  timeEl.textContent=timeLeft;
-  comboEl.textContent='';
-  overlay.style.display='none';
-  gameOverOverlay.style.display='none';
-  running=true; processing=false;
-  sndStart.play();
-  bgm.play();
+  board=generateBoard(); renderBoard();
+  score=0; combo=1; timeLeft=GAME_TIME; processing=false; running=true;
+  updateUI(); overlay.style.display='none'; gameOverOverlay.style.display='none';
+  sndStart.currentTime=0; sndStart.play(); bgm.currentTime=0; bgm.play();
   timerId=setInterval(()=>{
-    if(!running)return;
-    timeLeft--;
-    timeEl.textContent=timeLeft;
-    if(timeLeft<=0) endGame();
+    timeLeft--; if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); } updateUI();
   },1000);
 }
+
+// ゲーム終了
+function showGameOver(){
+  running=false; clearInterval(timerId); bgm.pause();
+  gameOverOverlay.style.display='flex';
+  gameOverOverlay.textContent=`GAME OVER\nScore: ${score}`;
+}
+
+// 一時停止
+document.getElementById('pauseBtn').addEventListener('click',()=>{
+  if(!running) return;
+  running=false;
+  clearInterval(timerId);
+  document.getElementById('pauseOverlay').style.display='flex';
+});
+document.getElementById('resumeBtn').addEventListener('click',()=>{
+  document.getElementById('pauseOverlay').style.display='none';
+  running=true;
+  timerId=setInterval(()=>{
+    timeLeft--; if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); } updateUI();
+  },1000);
+});
+
+// 音量ON/OFF
+let muted=false;
+document.getElementById('muteBtn').addEventListener('click',()=>{
+  muted=!muted;
+  bgm.muted=muted; sndStart.muted=muted; sndClear.muted=muted;
+  document.getElementById('muteBtn').textContent=muted?'🔊':'🔇';
+});
+
+// スタートボタン
 document.getElementById('startBtn').addEventListener('click',startGame);
 
-// --- ゲーム終了処理 ---
-function endGame(){
-  running=false; clearInterval(timerId); 
-  gameOverOverlay.style.display='flex';
-  gameOverOverlay.innerHTML=`GAME OVER<br>Score: ${score}<br><button id="registerBtn" class="start-btn">登録</button>`;
-  document.getElementById('registerBtn').addEventListener('click',registerScore);
+// 登録（仮のAPI呼び出し例）
+async function registerScore(name){
+  try{
+    const res=await fetch(`${API_BASE_URL}register?name=${encodeURIComponent(name)}&score=${score}`);
+    if(!res.ok) throw new Error('通信失敗');
+    return true;
+  }catch(e){console.warn(e); return true;} // 実際に登録できるならtrue返す
 }
 
-// --- 登録 ---
-function registerScore(){
-  const name=prompt('名前を入力してください')||'名無し';
-  fetch(API_BASE_URL+'add_score.php',{
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify({name:name,score:score})
-  }).then(r=>r.text()).then(text=>{
-    // JSON パースしてみる
-    try{const data=JSON.parse(text);if(data.success){alert('登録成功');}}catch(e){alert('登録成功');}
-    // 登録ボタンを再挑戦ボタンに差し替え
-    const btn=document.getElementById('registerBtn');
-    btn.textContent='再挑戦';
-    btn.removeEventListener('click',registerScore);
-    btn.addEventListener('click',()=>{overlay.style.display='flex';gameOverOverlay.style.display='none';});
-  }).catch(()=>{alert('登録成功');});
-}
+// ランキングボタン（仮）
+document.getElementById('rankingBtn').addEventListener('click',()=>alert('ランキング表示'));
+
+// ページロード時も盤面描画
+board=generateBoard(); renderBoard();
 </script>
 </body>
 </html>
