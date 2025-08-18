@@ -1,4 +1,5 @@
-<!doctype html>
+<!-- 修正版 -->
+<!doctype html> 
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
@@ -295,6 +296,7 @@ function updateUI(){
   timeEl.textContent=timeLeft;
   comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
+
 function showGameOver(){
   bgm.pause();
   fetch(API_BASE_URL+'check_rank.php',{
@@ -325,7 +327,15 @@ function showGameOver(){
           if(res.success){
             alert('登録しました！');
             loadRanking();
-            startGame();
+            // 🔽 修正点: 登録成功後は「再挑戦」ボタンを出す
+            gameOverOverlay.innerHTML=`
+              <div>最終スコア</div>
+              <div style="font-size:15vw; font-weight:900;">${score}</div>
+              <button id="restartBtn" class="start-btn">RESTART</button>
+            `;
+            document.getElementById('restartBtn').onclick=()=>{
+              startGame(); gameOverOverlay.style.display='none';
+            };
           }else{
             alert(res.error || '登録失敗');
           }
@@ -517,6 +527,7 @@ resumeBtn.addEventListener('click',()=>{
   },1000);
 });
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+// --- あなたの元のコードにある処理は省略（startGame, updateUI, playerMoveなど） ---
 </script>
 </body>
 </html>
