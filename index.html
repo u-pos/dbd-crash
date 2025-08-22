@@ -2,32 +2,39 @@
 <html lang="ja">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Match-3 Mobile Swipe</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
-html,body {margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:sans-serif;}
-.wrap {width:100%;height:100%;display:flex;flex-direction:column;align-items:center;}
-.header {display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5vw;font-size:3.6vw;font-weight:600;}
-.panel {background:rgba(255,255,255,0.04);padding:0.8vw 1.5vw;border-radius:12px;min-width:28vw;text-align:center;}
-#combo {color:#ffde59;font-weight:900;font-size:3.5vw;}
-.board {background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
+html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:sans-serif;}
+.wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;}
+.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5vw;font-size:3.6vw;font-weight:600;}
+.panel{background:rgba(255,255,255,0.04);padding:0.8vw 1.5vw;border-radius:12px;min-width:28vw;text-align:center;}
+#combo{color:#ffde59;font-weight:900;font-size:3.5vw;}
+.board{background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
 display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;}
-.cell {width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;background:#111a2a;
+.cell{width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;background:#111a2a;
 display:flex;align-items:center;justify-content:center;}
-.cell img {width:100%;height:100%;object-fit:cover;pointer-events:none;}
-.vanish {animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards;}
-@keyframes vanish {0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
-.start-overlay,#gameOverOverlay {position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;}
-.start-btn {background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
-#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
-.bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
-.icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
-.pause-overlay {position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:black;z-index:20;
+.cell img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
+@keyframes vanish{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
+.vanish{animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards;}
+.start-overlay,#gameOverOverlay{
+  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;
+}
+.start-btn{background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
+#gameOverOverlay{font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
+.bottom-buttons{display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
+.icon-btn{background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
+.rules-table-fixed{margin-top:0.5rem;font-size:0.75rem;width:100%;}
+.rules-table-fixed table{width:100%;color:#fff;border-collapse:collapse;text-align:center;}
+.rules-table-fixed th,.rules-table-fixed td{border-bottom:1px solid #555;padding:0.2rem;}
+.rules-table-fixed th{border-bottom:2px solid #ffde59;}
+.pause-overlay{position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:black;z-index:20;
 flex-direction:column;color:white;font-size:1.5rem;}
-#rankingOverlay {position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 100; display: none; justify-content: center; align-items: center;}
-.ranking-content {background: rgba(255,255,255,0.95); color: #000; padding: 1rem; border-radius: 8px; width: 80%; max-width: 500px; display: flex; flex-direction: column; max-height: 80%; overflow-y: auto;}
+/* ランキングオーバーレイ */
+#rankingOverlay{position: fixed;inset: 0;background: rgba(0,0,0,0.7);z-index: 100;display: none;justify-content: center;align-items: center;}
+.ranking-content{background: rgba(255,255,255,0.95);color: #000;padding: 1rem;border-radius: 8px;width: 80%;max-width: 500px;display: flex;flex-direction: column;max-height: 80%;overflow-y: auto;}
 </style>
 </head>
 <body>
@@ -53,6 +60,17 @@ flex-direction:column;color:white;font-size:1.5rem;}
     <button id="pauseBtn" class="icon-btn">⏸</button>
     <button id="rankingBtn" class="icon-btn">🏆</button>
   </div>
+  <div class="rules-table-fixed">
+    <table>
+      <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
+      <tbody>
+        <tr><td>3個消し</td><td>100点</td></tr>
+        <tr><td>4個消し</td><td>300点</td></tr>
+        <tr><td>5個消し</td><td>500点</td></tr>
+        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍。</td></tr>
+      </tbody>
+    </table>
+  </div>
 </div>
 
 <div id="rankingOverlay">
@@ -69,35 +87,28 @@ flex-direction:column;color:white;font-size:1.5rem;}
 
 <script>
 const API_BASE_URL='https://junkhin.com/api/';
-function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function sleep(ms){return new Promise(res=>setTimeout(res,ms));}
 
-// --- ランキング ---
-async function loadRanking(){
-  try{
-    const res = await fetch(API_BASE_URL+'get_scores.php');
-    const data = await res.json();
-    let html = '<ol>';
+function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+// ランキング読込
+function loadRanking(){
+  fetch(API_BASE_URL+'get_scores.php').then(r=>r.json()).then(data=>{
     if(data.success){
-      data.scores.forEach(s=>{html += `<li>${escapeHtml(s.name)} - ${s.score}</li>`;});
-    }
-    html += '</ol>';
-    document.getElementById('rankingList').innerHTML = html;
-  }catch(e){
-    document.getElementById('rankingList').innerHTML='<p>取得失敗</p>';
-  }
+      let html='<ol>';
+      data.scores.slice(0,15).forEach(s=>html+=`<li>${escapeHtml(s.name)} - ${s.score}</li>`);
+      html+='</ol>';
+      document.getElementById('rankingList').innerHTML=html;
+    }else{document.getElementById('rankingList').innerHTML='<p>取得失敗</p>';}
+  }).catch(err=>{console.error(err);document.getElementById('rankingList').innerHTML='<p>通信エラー</p>';});
 }
 document.getElementById('rankingBtn').addEventListener('click',()=>{
-  loadRanking();
-  document.getElementById('rankingOverlay').style.display='flex';
+  loadRanking(); document.getElementById('rankingOverlay').style.display='flex';
 });
-document.getElementById('closeRanking').addEventListener('click',()=>{
-  document.getElementById('rankingOverlay').style.display='none';
-});
+document.getElementById('closeRanking').addEventListener('click',()=>{document.getElementById('rankingOverlay').style.display='none';});
 
-// --- ゲームロジック ---
+// --- 基本ゲームロジック ---
 const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60;
-let board=[],running=false,score=0,timeLeft=GAME_TIME,combo=1,processing=false,timerId;
+let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
 const boardEl=document.getElementById('board');
 const scoreEl=document.getElementById('score');
 const timeEl=document.getElementById('time');
@@ -111,165 +122,86 @@ const bgm=document.getElementById('bgm'); bgm.volume=0.2;
 function idx(r,c){return r*COLS+c;}
 function rc(i){return [Math.floor(i/COLS),i%COLS];}
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-
-function generateBoard(){
-  const b=new Array(ROWS*COLS).fill(0);
-  for(let r=0;r<ROWS;r++){
-    for(let c=0;c<COLS;c++){
-      let t;
-      let attempts=0;
-      do{
-        t=randInt(1,TILE_TYPES);
-        let bad=false;
-        if(c>=2 && b[idx(r,c-1)]==t && b[idx(r,c-2)]==t) bad=true;
-        if(r>=2 && b[idx(r-1,c)]==t && b[idx(r-2,c)]==t) bad=true;
-        if(!bad) break;
-        attempts++; if(attempts>50) break;
-      }while(true);
-      b[idx(r,c)]=t;
-    }
-  }
-  return b;
-}
-
-function renderBoard(prevBoard){
-  boardEl.innerHTML='';
-  for(let i=0;i<board.length;i++){
-    const t=board[i];
-    const cell=document.createElement('div'); cell.className='cell'; cell.dataset.i=i;
-    if(t>0){
-      const img=document.createElement('img'); img.src=`tile${t}.png`;
-      if(prevBoard && prevBoard[i]===0){img.style.opacity='0';img.style.transform='translateY(-120%)';
-        requestAnimationFrame(()=>{img.style.transition='transform 0.4s, opacity 0.4s'; img.style.transform='translateY(0)'; img.style.opacity='1';});
-      }
-      cell.appendChild(img);
-    }
-    boardEl.appendChild(cell);
-  }
-}
+function generateBoard(){const b=new Array(ROWS*COLS).fill(0);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){let attempts=0;while(true){const t=randInt(1,TILE_TYPES);b[idx(r,c)]=t;let bad=false;if(c>=2 && b[idx(r,c-1)]==t && b[idx(r,c-2)]==t) bad=true;if(r>=2 && b[idx(r-1,c)]==t && b[idx(r-2,c)]==t) bad=true;if(!bad) break;attempts++;if(attempts>50) break;}}}return b;}
+function findMatches(b){const clear=new Set();for(let r=0;r<ROWS;r++){let runT=null,runS=0,runL=0;for(let c=0;c<COLS;c++){const t=b[idx(r,c)];if(t===runT) runL++;else{if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k));runT=t;runS=c;runL=1;}}if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k));}for(let c=0;c<COLS;c++){let runT=null,runS=0,runL=0;for(let r=0;r<ROWS;r++){const t=b[idx(r,c)];if(t===runT) runL++;else{if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));runT=t;runS=r;runL=1;}}if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(runS+k,c));}return Array.from(clear).sort((a,b)=>a-b);}
+function collapseBoard(b){const nb=b.slice();for(let c=0;c<COLS;c++){let emptyRow=ROWS-1;for(let r=ROWS-1;r>=0;r--){if(nb[idx(r,c)]!==0){nb[idx(emptyRow,c)]=nb[idx(r,c)];if(emptyRow!==r) nb[idx(r,c)]=0;emptyRow--;}}for(let r=emptyRow;r>=0;r--) nb[idx(r,c)]=randInt(1,TILE_TYPES);}return nb;}
+function swapTiles(b,i1,i2){const nb=b.slice();[nb[i1],nb[i2]]=[nb[i2],nb[i1]];return nb;}
+function scoreForMatch(count){switch(count){case 3:return 100;case 4:return 300;case 5:return 500;default:return 500+(count-5)*100;}}
+function renderBoard(prevBoard){boardEl.innerHTML='';for(let i=0;i<board.length;i++){const t=board[i];const cell=document.createElement('div');cell.className='cell';cell.dataset.i=i;if(t>0){const img=document.createElement('img');img.src=`tile${t}.png`;if(prevBoard && prevBoard[i]===0){img.style.opacity='0';img.style.transform='translateY(-120%)';requestAnimationFrame(()=>{img.style.transition='transform 0.4s cubic-bezier(.3,.7,.4,1), opacity 0.4s ease';img.style.transform='translateY(0)';img.style.opacity='1';});}cell.appendChild(img);}boardEl.appendChild(cell);}}
+function wait(ms){return new Promise(res=>setTimeout(res,ms));}
 
 function startGame(){
-  overlay.style.display='none';
-  gameOverOverlay.style.display='none';
-  document.getElementById('rankingOverlay').style.display='none';
+  overlay.style.display='none'; gameOverOverlay.style.display='none'; document.getElementById('rankingOverlay').style.display='none';
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
-  running=true; updateUI(); renderBoard();
-  sndStart.currentTime=0; sndStart.play();
-  timerId=setInterval(()=>{
-    timeLeft--; updateUI();
-    if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); }
-  },1000);
+  running=true; updateUI(); renderBoard(); sndStart.currentTime=0; sndStart.play();
+  timerId=setInterval(()=>{timeLeft--; if(timeLeft<=0){clearInterval(timerId); running=false; showGameOver();} updateUI();},1000);
 }
+function updateUI(){scoreEl.textContent=score; timeEl.textContent=timeLeft; comboEl.textContent=combo>1?`${combo}コンボ！`:'';}
 
-function updateUI(){
-  scoreEl.textContent=score; timeEl.textContent=timeLeft;
-  comboEl.textContent=combo>1?`${combo}コンボ！`:'';
-}
-
-// --- ゲームオーバー処理 ---
-// --- ゲームオーバー処理 ---
 async function showGameOver(){
   bgm.pause();
-  try{
-    const resRank=await fetch(API_BASE_URL+'check_rank.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({score})});
-    const data=await resRank.json();
-   // gameOverOverlay を上書きせずに子要素だけ操作
-gameOverOverlay.style.display='flex';
-gameOverOverlay.innerHTML=''; // まず内部をクリア
+  const resCheck = await fetch(API_BASE_URL+'check_rank.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({score})});
+  const data = await resCheck.json();
+  gameOverOverlay.style.display='flex'; gameOverOverlay.innerHTML='';
 
-const scoreDiv = document.createElement('div');
-scoreDiv.textContent = `最終スコア: ${score}`;
-scoreDiv.style.fontSize='15vw';
-scoreDiv.style.fontWeight='900';
-gameOverOverlay.appendChild(scoreDiv);
+  const scoreDiv=document.createElement('div'); scoreDiv.textContent=`最終スコア: ${score}`; scoreDiv.style.fontSize='15vw'; scoreDiv.style.fontWeight='900';
+  gameOverOverlay.appendChild(scoreDiv);
 
-if(data.success && data.entersTop15){
-    const input = document.createElement('input');
-    input.type='text';
-    input.id='playerName';
-    input.placeholder='名前を入力';
-    input.style.fontSize='5vw';
-    input.style.margin='1rem 0';
+  if(data.success && data.entersTop15){
+    const input=document.createElement('input'); input.type='text'; input.id='playerName'; input.placeholder='名前を入力'; input.style.fontSize='5vw'; input.style.margin='1rem 0';
     gameOverOverlay.appendChild(input);
-
-    const saveBtn = document.createElement('button');
-    saveBtn.id='saveNameBtn';
-    saveBtn.className='start-btn';
-    saveBtn.textContent='登録';
+    const saveBtn=document.createElement('button'); saveBtn.id='saveNameBtn'; saveBtn.className='start-btn'; saveBtn.textContent='登録';
     gameOverOverlay.appendChild(saveBtn);
 
-    saveBtn.onclick = async () => {
-        const name = input.value.trim();
-        if(!name){ alert('名前を入力してください'); return; }
-        const resSave = await fetch(API_BASE_URL+'save_score.php',{
-            method:'POST',
-            headers:{'Content-Type':'application/x-www-form-urlencoded'},
-            body: new URLSearchParams({name, score})
-        });
-        const saveData = await resSave.json();
-        if(saveData.success){
-            alert('登録完了しました');
-            // 登録後、ボタンだけ差し替え
-            const restartBtn = document.createElement('button');
-            restartBtn.id='restartBtn';
-            restartBtn.className='start-btn';
-            restartBtn.textContent='RESTART';
-            restartBtn.onclick = () => { startGame(); gameOverOverlay.style.display='none'; };
-            // 古いボタンを置き換える
-            saveBtn.replaceWith(restartBtn);
-            loadRanking();
-        } else {
-            alert(saveData.error || '登録失敗');
-        }
+    saveBtn.onclick=async ()=>{
+      const name=input.value.trim(); if(!name){alert('名前を入力してください'); return;}
+      const resSave=await fetch(API_BASE_URL+'save_score.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({name,score})});
+      const saveData=await resSave.json();
+      if(saveData.success){
+        alert('登録完了しました'); const restartBtn=document.createElement('button');
+        restartBtn.id='restartBtn'; restartBtn.className='start-btn'; restartBtn.textContent='RESTART';
+        restartBtn.onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
+        saveBtn.replaceWith(restartBtn); loadRanking();
+      } else {alert(saveData.error||'登録失敗');}
     }
-} else {
-    const restartBtn = document.createElement('button');
-    restartBtn.id='restartBtn';
-    restartBtn.className='start-btn';
-    restartBtn.textContent='RESTART';
-    restartBtn.onclick = () => { startGame(); gameOverOverlay.style.display='none'; };
+  } else {
+    const restartBtn=document.createElement('button'); restartBtn.id='restartBtn'; restartBtn.className='start-btn'; restartBtn.textContent='RESTART';
+    restartBtn.onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
     gameOverOverlay.appendChild(restartBtn);
-}
-
-// --- ランキングTOP15に修正 ---
-async function loadRanking(){
-  try{
-    const res = await fetch(API_BASE_URL+'get_scores.php');
-    const data = await res.json();
-    let html = '<ol>';
-    if(data.success){
-      data.scores.slice(0,15).forEach(s=>{ // TOP15まで
-        html += `<li>${escapeHtml(s.name)} - ${s.score}</li>`;
-      });
-    }
-    html += '</ol>';
-    document.getElementById('rankingList').innerHTML = html;
-  }catch(e){
-    document.getElementById('rankingList').innerHTML='<p>取得失敗</p>';
   }
 }
 
-// --- 初期描画 ---
-board=generateBoard(); renderBoard(); updateUI();
-document.getElementById('startBtn').addEventListener('click',startGame);
+// --- タッチ操作（簡易スワイプ） ---
+let touchStart=null; boardEl.addEventListener('pointerdown',e=>{if(!running||processing) return; touchStart={x:e.clientX,y:e.clientY};});
+boardEl.addEventListener('pointerup',e=>{
+  if(!running||processing||!touchStart) return;
+  const dx=e.clientX-touchStart.x; const dy=e.clientY-touchStart.y;
+  const absX=Math.abs(dx), absY=Math.abs(dy); if(absX<30 && absY<30) {touchStart=null; return;}
+  const direction = absX>absY?(dx>0?'right':'left'):(dy>0?'down':'up');
+  const cellEl=e.target.closest('.cell'); if(!cellEl) {touchStart=null; return;}
+  const i=parseInt(cellEl.dataset.i); let targetI;
+  const [r,c]=rc(i);
+  switch(direction){
+    case 'up': targetI=idx(r-1,c); break;
+    case 'down': targetI=idx(r+1,c); break;
+    case 'left': targetI=idx(r,c-1); break;
+    case 'right': targetI=idx(r,c+1); break;
+  }
+  if(targetI>=0 && targetI<ROWS*COLS){
+    processing=true;
+    board=swapTiles(board,i,targetI);
+    renderBoard();
+    setTimeout(()=>{processing=false;},200);
+  }
+  touchStart=null;
+});
 
-// --- ミュート／一時停止 ---
-let muted=false;
-document.getElementById('muteBtn').addEventListener('click',()=>{
-  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
-  document.getElementById('muteBtn').textContent=muted?'🔈':'🔇';
-});
-const pauseOverlayEl=document.getElementById('pauseOverlay');
-document.getElementById('pauseBtn').addEventListener('click',()=>{
-  if(!running) return;
-  clearInterval(timerId); running=false; bgm.pause(); pauseOverlayEl.style.display='flex';
-});
-document.getElementById('resumeBtn').addEventListener('click',()=>{
-  running=true; pauseOverlayEl.style.display='none'; bgm.play().catch(()=>{});
-  timerId=setInterval(()=>{ timeLeft--; updateUI(); if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); } },1000);
-});
-document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+// --- ボタン操作 ---
+document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('pauseBtn').addEventListener('click',()=>{if(!running) return;document.getElementById('pauseOverlay').style.display='flex';});
+document.getElementById('resumeBtn').addEventListener('click',()=>{document.getElementById('pauseOverlay').style.display='none';});
+document.getElementById('muteBtn').addEventListener('click',()=>{bgm.muted=!bgm.muted;});
 </script>
 </body>
 </html>
