@@ -9,23 +9,23 @@
 html,body{margin:0;padding:0;width:100%;height:100%;overflow:hidden;background:#111;color:#fff;font-family:sans-serif;}
 .wrap{width:100%;height:100%;display:flex;flex-direction:column;align-items:center;}
 .header{display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5vw;font-size:3.6vw;font-weight:600;}
-.panel{background:rgba(255,255,255,0.04);padding:0.8vw 1.5vw;border-radius:12px;min-width:28vw;text-align:center;}
+.panel{background:rgba(255,255,255,0.04);padding:0.5vw 1vw;border-radius:10px;min-width:25vw;text-align:center;}
 #combo{color:#ffde59;font-weight:900;font-size:3.5vw;}
-.board{background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
+.board{background:#222;padding:6px;border-radius:10px;
 display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;position:relative;}
 .cell{width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;background:#111a2a;
 display:flex;align-items:center;justify-content:center;cursor:pointer;}
 .cell img{width:100%;height:100%;object-fit:cover;pointer-events:none;}
 @keyframes vanish{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
 .vanish{animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards;}
-/* オーバーレイは盤面を隠さず半透明に重ねる */
+/* オーバーレイは盤面を消さずに上から被せる */
 .start-overlay,#gameOverOverlay,.pause-overlay{
   position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
   background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;
 }
 .start-btn{background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;padding:14px 26px;
   border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
-#gameOverOverlay{font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
+#gameOverOverlay{font-size:8vw;font-weight:900;gap:1vw;text-align:center;display:none;}
 .bottom-buttons{display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
 .icon-btn{background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
 .rules-table-fixed{margin-top:0.5rem;font-size:0.75rem;width:100%;}
@@ -47,7 +47,7 @@ display:flex;align-items:center;justify-content:center;cursor:pointer;}
   <div id="boardWrap" style="position:relative;">
     <div id="board" class="board"></div>
 
-    <!-- 盤面を隠さず上に重ねるだけ -->
+    <!-- 盤面を消さずに上から重ねる -->
     <div id="overlay" class="start-overlay">
       <button id="startBtn" class="start-btn">START</button>
     </div>
@@ -89,77 +89,63 @@ display:flex;align-items:center;justify-content:center;cursor:pointer;}
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-// --- API関連 ---
-const API_BASE_URL='https://junkhin.com/api/';
-function escapeHtml(str){return str.replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
-function loadRanking(){
-  fetch(API_BASE_URL+'get_scores.php').then(r=>r.json()).then(data=>{
-    if(data.success){
-      let html='<ol>'; data.scores.slice(0,15).forEach(s=>html+=`<li>${escapeHtml(s.name)} - ${s.score}</li>`); html+='</ol>';
-      document.getElementById('rankingList').innerHTML=html;
-    }else{document.getElementById('rankingList').innerHTML='<p>取得失敗</p>';}
-  }).catch(()=>{document.getElementById('rankingList').innerHTML='<p>通信エラー</p>';});
+const cols=8,rows=8;
+const icons=["🍎","🍋","🍇","🍓","🍒"];
+let score=0,time=60,timer=null;
+const board=document.getElementById("board");
+const scoreEl=document.getElementById("score");
+const timeEl=document.getElementById("time");
+const overlay=document.getElementById("overlay");
+const gameOverOverlay=document.getElementById("gameOverOverlay");
+
+function initBoard(){
+  board.innerHTML="";
+  for(let r=0;r<rows;r++){
+    for(let c=0;c<cols;c++){
+      const cell=document.createElement("div");
+      cell.className="cell";
+      cell.textContent=icons[Math.floor(Math.random()*icons.length)];
+      board.appendChild(cell);
+    }
+  }
 }
-document.getElementById('rankingBtn').addEventListener('click',()=>{
-  loadRanking(); document.getElementById('rankingOverlay').style.display='flex';
-});
-document.getElementById('closeRanking').addEventListener('click',()=>{document.getElementById('rankingOverlay').style.display='none';});
 
-// --- ゲーム本体 ---
-const ROWS=8,COLS=8,TILE_TYPES=6,GAME_TIME=60;
-let board=[],running=false,score=0,timeLeft=GAME_TIME,combo=1,timerId,processing=false;
-const boardEl=document.getElementById('board');
-const scoreEl=document.getElementById('score');
-const timeEl=document.getElementById('time');
-const comboEl=document.getElementById('combo');
-const overlay=document.getElementById('overlay');
-const gameOverOverlay=document.getElementById('gameOverOverlay');
-const sndStart=document.getElementById('sndStart');
-const sndClear=document.getElementById('sndClear');
-const bgm=document.getElementById('bgm'); bgm.volume=0.2;
+function startGame(){
+  score=0;time=60;
+  scoreEl.textContent=score;timeEl.textContent=time;
+  overlay.style.display="none";
+  gameOverOverlay.style.display="none";
+  clearInterval(timer);
+  timer=setInterval(()=>{
+    time--;timeEl.textContent=time;
+    if(time<=0){endGame();}
+  },1000);
+}
 
-function idx(r,c){return r*COLS+c;}
-function rc(i){return [Math.floor(i/COLS),i%COLS];}
-function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min;}
-function generateBoard(){const b=new Array(ROWS*COLS).fill(0);for(let r=0;r<ROWS;r++){for(let c=0;c<COLS;c++){let t=randInt(1,TILE_TYPES);b[idx(r,c)]=t;}}return b;}
-function renderBoard(){boardEl.innerHTML='';for(let i=0;i<board.length;i++){const t=board[i];const cell=document.createElement('div');cell.className='cell';cell.dataset.i=i;if(t>0){const img=document.createElement('img');img.src=`tile${t}.png`;cell.appendChild(img);}boardEl.appendChild(cell);}}
-function updateUI(){scoreEl.textContent=score; timeEl.textContent=timeLeft; comboEl.textContent=combo>1?`${combo}コンボ！`:'';}
-function swapTiles(i1,i2){[board[i1],board[i2]]=[board[i2],board[i1]];}
-function findMatches(){const clear=new Set();for(let r=0;r<ROWS;r++){let runT=board[idx(r,0)],runL=1;for(let c=1;c<COLS;c++){const t=board[idx(r,c)];if(t===runT) runL++;else{if(runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,c-runL+k)); runT=t; runL=1;}}if(runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,COLS-runL+k));}for(let c=0;c<COLS;c++){let runT=board[idx(0,c)],runL=1;for(let r=1;r<ROWS;r++){const t=board[idx(r,c)];if(t===runT) runL++;else{if(runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r-runL+k,c)); runT=t; runL=1;}}if(runL>=3) for(let k=0;k<runL;k++) clear.add(idx(ROWS-runL+k,c));}return Array.from(clear);}
-function collapseBoard(){for(let c=0;c<COLS;c++){let emptyRow=ROWS-1;for(let r=ROWS-1;r>=0;r--){if(board[idx(r,c)]!==0){board[idx(emptyRow,c)]=board[idx(r,c)];if(emptyRow!==r) board[idx(r,c)]=0;emptyRow--;}}for(let r=emptyRow;r>=0;r--) board[idx(r,c)]=randInt(1,TILE_TYPES);}}
-function scoreForMatch(n){switch(n){case 3:return 100;case 4:return 300;case 5:return 500;default:return 500+(n-5)*100;}}
-async function processMatches(){let matches=findMatches();if(matches.length===0){combo=1;return false;}combo++;let matchCount=matches.length;score+=scoreForMatch(matchCount)*combo;sndClear.currentTime=0;sndClear.play();for(const i of matches){board[i]=0;}renderBoard();await new Promise(r=>setTimeout(r,200));collapseBoard();renderBoard();await new Promise(r=>setTimeout(r,200));return true;}
-async function gameLoop(){while(running){let changed=await processMatches();if(!changed) break;}}
-function startGame(){overlay.style.display='none'; gameOverOverlay.style.display='none'; board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false; running=true; updateUI(); renderBoard(); bgm.currentTime=0; bgm.play().catch(()=>{}); sndStart.currentTime=0; sndStart.play(); timerId=setInterval(()=>{timeLeft--; updateUI(); if(timeLeft<=0){clearInterval(timerId);running=false;showGameOver();}},1000);}
-document.getElementById('startBtn').addEventListener('click',startGame);
+function endGame(){
+  clearInterval(timer);
+  gameOverOverlay.style.display="flex";
+  gameOverOverlay.innerHTML=`
+    <div style="color:white;font-size:6vw;">Game Over</div>
+    <input id="playerName" placeholder="名前" style="margin-top:10px;padding:5px;">
+    <button id="registerBtn" class="start-btn">登録</button>
+  `;
+  document.getElementById("registerBtn").onclick=()=>{
+    setTimeout(()=>{
+      alert("登録完了しました");
+      document.getElementById("registerBtn").outerHTML='<button id="retryBtn" class="start-btn">再挑戦</button>';
+      document.getElementById("retryBtn").onclick=()=>{
+        initBoard();overlay.style.display="flex";
+      };
+    },200);
+  };
+}
 
-// --- タッチ操作（スワイプ） ---
-let touchStart=null;
-boardEl.addEventListener('pointerdown',e=>{if(!running||processing) return;touchStart={x:e.clientX,y:e.clientY,target:e.target.closest('.cell')};});
-boardEl.addEventListener('pointerup',async e=>{
-  if(!running||processing||!touchStart) return;
-  const dx=e.clientX-touchStart.x, dy=e.clientY-touchStart.y;
-  if(Math.abs(dx)<30 && Math.abs(dy)<30){touchStart=null;return;}
-  const dir=Math.abs(dx)>Math.abs(dy)?(dx>0?'right':'left'):(dy>0?'down':'up');
-  const cellEl=touchStart.target; if(!cellEl){touchStart=null;return;}
-  const i=parseInt(cellEl.dataset.i); const [r,c]=rc(i); let targetI;
-  switch(dir){case 'up': targetI=idx(r-1,c); break; case 'down': targetI=idx(r+1,c); break; case 'left': targetI=idx(r,c-1); break; case 'right': targetI=idx(r,c+1); break;}
-  if(targetI>=0 && targetI<ROWS*COLS){processing=true; swapTiles(i,targetI); renderBoard(); await gameLoop(); processing=false; renderBoard();}
-  touchStart=null;
-});
+document.getElementById("startBtn").onclick=startGame;
+document.getElementById("rankingBtn").onclick=()=>document.getElementById("rankingOverlay").style.display="flex";
+document.getElementById("closeRanking").onclick=()=>document.getElementById("rankingOverlay").style.display="none";
 
-// --- ゲームオーバー ---
-async function showGameOver(){bgm.pause(); gameOverOverlay.style.display='flex'; gameOverOverlay.innerHTML=''; const scoreDiv=document.createElement('div'); scoreDiv.textContent=`最終スコア: ${score}`; scoreDiv.style.fontSize='15vw'; scoreDiv.style.fontWeight='900'; gameOverOverlay.appendChild(scoreDiv);
-const input=document.createElement('input'); input.type='text'; input.id='playerName'; input.placeholder='名前を入力'; input.style.fontSize='5vw'; input.style.margin='1rem 0'; gameOverOverlay.appendChild(input);
-const saveBtn=document.createElement('button'); saveBtn.id='saveNameBtn'; saveBtn.className='start-btn'; saveBtn.textContent='登録'; gameOverOverlay.appendChild(saveBtn);
-saveBtn.onclick=async ()=>{const name=input.value.trim(); if(!name){alert('名前を入力してください'); return;}
-const resSave=await fetch(API_BASE_URL+'save_score.php',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({name,score})}); const saveData=await resSave.json();
-if(saveData.success){alert('登録完了しました'); const restartBtn=document.createElement('button'); restartBtn.id='restartBtn'; restartBtn.className='start-btn'; restartBtn.textContent='RESTART'; restartBtn.onclick=()=>{startGame(); gameOverOverlay.style.display='none';}; saveBtn.replaceWith(restartBtn); loadRanking();}else{alert(saveData.error||'登録失敗');}}
-
-// --- ボタン ---
-document.getElementById('pauseBtn').addEventListener('click',()=>{if(!running) return;document.getElementById('pauseOverlay').style.display='flex';});
-document.getElementById('resumeBtn').addEventListener('click',()=>{document.getElementById('pauseOverlay').style.display='none';});
-document.getElementById('muteBtn').addEventListener('click',()=>{bgm.muted=!bgm.muted;});
+window.onload=()=>{initBoard();};
 </script>
 </body>
 </html>
