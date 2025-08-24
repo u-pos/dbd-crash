@@ -1,5 +1,4 @@
-<!-- 修正版 -->
-<!doctype html> 
+<!doctype html>
 <html lang="ja">
 <head>
 <meta charset="utf-8" />
@@ -105,7 +104,7 @@ flex-direction:column;color:white;font-size:1.5rem;}
 <div id="rankingOverlay">
   <div class="ranking-content">
     <button id="closeRanking" class="icon-btn" style="font-size:2rem;align-self:flex-end;">✖</button>
-    <h2 style="text-align:center;">🏆 ランキング TOP20 🏆</h2>
+    <h2 id="rankingTitle" style="text-align:center;">🏆 ランキング TOP15 🏆</h2>
     <div id="rankingList" style="font-size:4vw;"></div>
   </div>
 </div>
@@ -113,37 +112,43 @@ flex-direction:column;color:white;font-size:1.5rem;}
 <audio id="sndStart" src="s.mp3" preload="auto"></audio>
 <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
+<!-- ★追加: ランクイン時の効果音 -->
+<audio id="sndCong" src="cong.mp3" preload="auto"></audio>
 
 <script>
-// APIエンドポイント ※URLは自分のサーバーに合わせて修正してください
+// ===== APIエンドポイント =====
 const API_BASE_URL = 'https://junkhin.com/api/';
 
+// ===== ユーティリティ =====
 function escapeHtml(str){
   return str.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
-// ランキング読込
-function loadRanking(){
-  fetch(API_BASE_URL+'get_scores.php')
-    .then(r=>r.json())
-    .then(data=>{
-      if(data.success){
-        let html = '<ol>';
-        data.scores.forEach(s => {
-          html += `<li>${escapeHtml(s.name)} - ${s.score}</li>`;
-        });
-        html += '</ol>';
-        document.getElementById('rankingList').innerHTML = html;
-      }else{
-        document.getElementById('rankingList').innerHTML = '<p>取得失敗</p>';
-      }
-    }).catch(err=>{
-      console.error(err);
-      document.getElementById('rankingList').innerHTML = '<p>通信エラー</p>';
-    });
+// ===== ランキング関連 =====
+const TOP_LIMIT = 15; // ★TOP15に固定
+
+async function loadRanking(){
+  try{
+    const r = await fetch(API_BASE_URL+'get_scores.php');
+    const data = await r.json();
+    if(data.success){
+      // 上位15件だけ表示（サーバが20返しても前側から切る）
+      const list = (data.scores||[]).slice(0, TOP_LIMIT);
+      let html = '<ol>';
+      list.forEach(s => {
+        html += `<li>${escapeHtml(s.name)} - ${s.score}</li>`;
+      });
+      html += '</ol>';
+      document.getElementById('rankingList').innerHTML = html;
+    }else{
+      document.getElementById('rankingList').innerHTML = '<p>取得失敗</p>';
+    }
+  }catch(e){
+    console.error(e);
+    document.getElementById('rankingList').innerHTML = '<p>通信エラー</p>';
+  }
 }
 
-// ランキングボタンイベント
 document.getElementById('rankingBtn').addEventListener('click',()=>{
   loadRanking();
   document.getElementById('rankingOverlay').style.display='flex';
@@ -152,7 +157,7 @@ document.getElementById('closeRanking').addEventListener('click',()=>{
   document.getElementById('rankingOverlay').style.display='none';
 });
 
-// --- 通常ゲームロジック（あなたの「正しいコード」部分） ---
+// ===== ゲーム本体 =====
 const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
 let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
 const boardEl=document.getElementById('board');
@@ -164,6 +169,8 @@ const gameOverOverlay=document.getElementById('gameOverOverlay');
 const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
 const bgm=document.getElementById('bgm');
+const sndCong=document.getElementById('sndCong'); // ★
+
 bgm.volume=0.2;
 
 function idx(r,c){return r*COLS+c}
@@ -275,8 +282,9 @@ function waitForAnimations(elements,timeout=800){
     });
   });
 }
+
 function startGame(){
-  // 全オーバーレイを強制非表示
+  // 全オーバーレイを非表示
   overlay.style.display='none';
   gameOverOverlay.style.display='none';
   document.getElementById('rankingOverlay').style.display='none';
@@ -297,100 +305,101 @@ function updateUI(){
   comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
 
-// --- ゲームオーバー処理 ---
-async function showGameOver(){
-  bgm.pause();
+// 共通のRESTART表示
+function showRestartOverlay(extraMsg=''){
+  gameOverOverlay.style.display='flex';
+  gameOverOverlay.innerHTML=`
+    ${extraMsg ? `<div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">${extraMsg}</div>` : ''}
+    <div>最終スコア</div>
+    <div style="font-size:15vw; font-weight:900;">${score}</div>
+    <button id="restartBtn" class="start-btn">RESTART</button>
+  `;
+  document.getElementById('restartBtn').onclick=()=>{
+    startGame(); gameOverOverlay.style.display='none';
+  };
+}
+
+// TOP15入り判定（get_scores.phpの結果で判定）
+async function isTop15(scoreVal){
   try{
-    const resRank = await fetch(API_BASE_URL+'check_rank.php',{
-      method:'POST',
-      headers:{'Content-Type':'application/x-www-form-urlencoded'},
-      body:new URLSearchParams({score})
-    });
-    const data = await resRank.json();
-
-    // overlay を表示（boardや表は触らない）
-    gameOverOverlay.style.display='flex';
-    gameOverOverlay.innerHTML = `
-      <div>最終スコア</div>
-      <div style="font-size:15vw;font-weight:900;">${score}</div>
-    `;
-
-    await sleep(200);
-
-    if(data.success && data.entersTop15){  // TOP15
-      const input = document.createElement('input'); 
-      input.type = 'text'; 
-      input.id = 'playerName'; 
-      input.placeholder = '名前を入力'; 
-      input.style.fontSize='5vw'; 
-      input.style.margin='1rem 0';
-      gameOverOverlay.appendChild(input);
-
-      const saveBtn = document.createElement('button'); 
-      saveBtn.id = 'saveNameBtn'; 
-      saveBtn.className = 'start-btn'; 
-      saveBtn.textContent = '登録';
-      gameOverOverlay.appendChild(saveBtn);
-
-      saveBtn.onclick = async ()=>{
-        const name = input.value.trim(); 
-        if(!name){ alert('名前を入力してください'); return; }
-
-        try{
-          const resSave = await fetch(API_BASE_URL+'save_score.php',{
-            method:'POST',
-            headers:{'Content-Type':'application/x-www-form-urlencoded'},
-            body:new URLSearchParams({name,score})
-          });
-          const saveData = await resSave.json();
-          if(saveData.success){
-            alert('登録完了しました');
-            await sleep(200);
-            // gameOverOverlay のみ書き換え
-            gameOverOverlay.innerHTML = `
-              <div>最終スコア</div>
-              <div style="font-size:15vw;font-weight:900;">${score}</div>
-              <button id="restartBtn" class="start-btn">RESTART</button>
-            `;
-            document.getElementById('restartBtn').onclick = ()=>{
-              startGame();
-              gameOverOverlay.style.display='none';
-            };
-            loadRanking();
-          }else{
-            alert(saveData.error || '登録失敗');
-          }
-        }catch(e){
-          alert('登録エラー'); 
-          console.error(e);
-        }
-      };
-    } else {
-      await sleep(200);
-      gameOverOverlay.innerHTML += `
-        <button id="restartBtn" class="start-btn">RESTART</button>
-      `;
-      document.getElementById('restartBtn').onclick = ()=>{
-        startGame();
-        gameOverOverlay.style.display='none';
-      };
-    }
-  }catch(err){ 
-    console.error(err); 
-    alert('ランキング取得エラー'); 
-    gameOverOverlay.innerHTML += `
-      <button id="restartBtn" class="start-btn">RESTART</button>
-    `;
-    document.getElementById('restartBtn').onclick = ()=>{
-      startGame();
-      gameOverOverlay.style.display='none';
-    };
+    const r = await fetch(API_BASE_URL+'get_scores.php');
+    const data = await r.json();
+    if(!data.success) return false;
+    const list = (data.scores||[]).slice(0, TOP_LIMIT);
+    if(list.length < TOP_LIMIT) return true; // まだ15枠埋まってない
+    const fifteenth = list[TOP_LIMIT-1]?.score ?? -Infinity;
+    return Number(scoreVal) >= Number(fifteenth);
+  }catch(e){
+    console.error('TOP15判定失敗', e);
+    return false; // 通信失敗時は安全側でfalse
   }
 }
 
-function showGameOver_legacy(){
-  // 元のゲームオーバー表示（もう使わない）
+function showGameOver(){
+  bgm.pause();
+  fetch(API_BASE_URL+'check_rank.php',{
+    method:'POST',
+    headers:{'Content-Type':'application/x-www-form-urlencoded'},
+    body:new URLSearchParams({score})
+  })
+  .then(res=>res.json())
+  .then(async data=>{
+    // まずTOP15かどうかを自力判定
+    const top15 = await isTop15(score);
+
+    if(top15){
+      // お祝い表示＋効果音
+      try{ sndCong.currentTime=0; sndCong.play().catch(()=>{});}catch(_){}
+      gameOverOverlay.style.display='flex';
+      gameOverOverlay.innerHTML=`
+        <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 おめでとうございます。TOP15にランクインしました！ 🎉</div>
+        <div>最終スコア</div>
+        <div style="font-size:15vw; font-weight:900;">${score}</div>
+        <input type="text" id="playerName" maxlength="50" placeholder="名前を入力" style="font-size:5vw;padding:5px;margin:1rem 0;">
+        <button id="saveNameBtn" class="start-btn">登録</button>
+      `;
+      const saveBtn = document.getElementById('saveNameBtn');
+      saveBtn.onclick=()=>{
+        const name=document.getElementById('playerName').value.trim();
+        if(!name){alert('名前を入力してください');return;}
+        saveBtn.disabled=true; saveBtn.textContent='送信中...';
+
+        fetch(API_BASE_URL+'save_score.php',{
+          method:'POST',
+          headers:{'Content-Type':'application/x-www-form-urlencoded'},
+          body:new URLSearchParams({name,score})
+        })
+        .then(async r=>{
+          let d;
+          try{ d = await r.json(); }catch(e){ d = { success: r.ok }; }
+          return d;
+        })
+        .then(res=>{
+          if(res && res.success){
+            loadRanking();
+            showRestartOverlay(); // 登録後はRESTART
+          }else{
+            alert((res && res.error) || '登録失敗');
+            saveBtn.disabled=false; saveBtn.textContent='登録';
+          }
+        })
+        .catch(err=>{
+          console.error(err);
+          // ネットワーク不調でもRESTARTへ
+          showRestartOverlay();
+        });
+      };
+    }else{
+      // ランク外はそのままRESTART
+      showRestartOverlay();
+    }
+  })
+  .catch(()=>{
+    // 判定失敗時もリスタート可能に
+    showRestartOverlay();
+  });
 }
+
 function groupMatches(boardArr, indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -415,6 +424,7 @@ function groupMatches(boardArr, indices){
   }
   return groups;
 }
+
 let touchStartIndex=null,startX=0,startY=0;
 boardEl.addEventListener('touchstart',e=>{
   if(!running||processing) return;
@@ -440,6 +450,7 @@ boardEl.addEventListener('touchend',e=>{
   playerMove(touchStartIndex, targetIndex);
   touchStartIndex=null;
 },{passive:false});
+
 async function playerMove(i1,i2){
   if(!running||processing) return;
   if(!isAdjacent(i1,i2)) return;
@@ -479,15 +490,16 @@ async function playerMove(i1,i2){
     });
     await waitForAnimations(imgEls, 600);
     matches.forEach(i => board[i] = 0);
-    // --- 距離に応じた自然落下 ---
+
+    // 自然落下
     const oldCells = Array.from(boardEl.children);
     const oldRects = oldCells.map(el => el.getBoundingClientRect());
     const collapsed = collapseBoard(board);
     board = collapsed;
-    renderBoard(board); 
+    renderBoard(board);
     const newCells = Array.from(boardEl.children);
     const newRects = newCells.map(el => el.getBoundingClientRect());
-    const basePerTile = 120; 
+    const basePerTile = 120;
     newCells.forEach((cell, i) => {
       const old = oldRects[i];
       const neu = newRects[i];
@@ -512,6 +524,7 @@ async function playerMove(i1,i2){
   updateUI();
   processing=false;
 }
+
 function renderSwapAnimation(i1,i2,success){
   const cells = boardEl.children;
   const cell1 = cells[i1];
@@ -531,15 +544,17 @@ function renderSwapAnimation(i1,i2,success){
     if(!success) renderBoard();
   }, 300);
 }
+
 function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r1-r2)+Math.abs(c1-c2)===1;}
 function renderBoardInitial(){board=generateBoard(); renderBoard();}
 renderBoardInitial(); updateUI();
+
 document.getElementById('startBtn').addEventListener('click',startGame);
 const muteBtn=document.getElementById('muteBtn');
 let muted=false;
 muteBtn.addEventListener('click',()=>{
   muted=!muted;
-  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
+  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted; sndCong.muted=muted; // ★congも反映
   muteBtn.textContent=muted?'🔈':'🔇';
 });
 const pauseOverlay=document.getElementById('pauseOverlay');
@@ -560,8 +575,8 @@ resumeBtn.addEventListener('click',()=>{
     updateUI();
   },1000);
 });
+// iOS対策：スクロール阻止
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
-// --- あなたの元のコードにある処理は省略（startGame, updateUI, playerMoveなど） ---
 </script>
 </body>
 </html>
