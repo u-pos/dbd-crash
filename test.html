@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
       content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Match-3 Mobile Swipe（オフライン＋ローカルTOP5）</title>
+<title>DBDクラッシュ</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
 html,body {
@@ -38,48 +38,28 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
 .rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.35rem;}
 .rules-table-fixed th {border-bottom:2px solid #ffde59;}
 
-/* ▶ 一時停止オーバーレイを画面にフィットさせる */
+/* ▶ 一時停止オーバーレイ（可変サイズ） */
 .pause-overlay {
   position:absolute; inset:0; display:none; align-items:center; justify-content:center;
   background:black; z-index:20; flex-direction:column; color:white; border-radius:10px;
-  /* 端末に合わせて自動拡大縮小 */
   gap:16px; padding:16px;
 }
 #pauseText{
   font-weight:900;
-  /* 画面幅に応じて可変。スマホ〜タブレットで見やすいサイズ */
   font-size:clamp(22px, 8vw, 56px);
-  letter-spacing: .02em;
-  text-shadow: 0 2px 10px rgba(0,0,0,.35);
+  letter-spacing:.02em;
+  text-shadow:0 2px 10px rgba(0,0,0,.35);
 }
-.pause-overlay .start-btn{
-  /* 再開ボタンも大きめに */
-  font-size:clamp(18px, 6vw, 28px);
-  padding:12px 28px;
-}
+.pause-overlay .start-btn{ font-size:clamp(18px, 6vw, 28px); padding:12px 28px; }
 
-/* ランキングオーバーレイ（localStorage / TOP5） */
+/* ランキング（localStorage / TOP5） */
 #rankingOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 100;
-  display: none;
-  justify-content: center;
-  align-items: center;
-  padding: 12px;
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 100; display: none; justify-content: center; align-items: center; padding: 12px;
 }
 .ranking-content {
-  background: rgba(20,20,24,0.95);
-  color: #fff;
-  padding: 14px;
-  border-radius: 12px;
-  width: 92vw;
-  max-width: 580px;
-  display: flex;
-  flex-direction: column;
-  max-height: 80vh;
-  overflow-y: auto;
+  background: rgba(20,20,24,0.95); color: #fff; padding: 14px; border-radius: 12px;
+  width: 92vw; max-width: 580px; display: flex; flex-direction: column; max-height: 80vh; overflow-y: auto;
 }
 .ranking-content h2 { text-align:center; margin: 4px 0 8px; }
 .lb-list { list-style: none; padding: 0; margin: 0; }
@@ -109,7 +89,7 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
       <button id="startBtn" class="start-btn">START</button>
     </div>
 
-    <!-- 一時停止（サイズ自動調整） -->
+    <!-- 一時停止 -->
     <div id="pauseOverlay" class="pause-overlay">
       <div id="pauseText">一時停止中</div>
       <button id="resumeBtn" class="start-btn">▶ 再開</button>
@@ -132,23 +112,25 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
         <tr><td>3個消し</td><td>100点</td></tr>
         <tr><td>4個消し</td><td>300点</td></tr>
         <tr><td>5個消し</td><td>500点</td></tr>
-        <tr>
-          <td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍...（最大10倍）</td>
-        </tr>
+        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍...（最大10倍）</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- ランキング（localStorage表示用／TOP5） -->
+<!-- ランキング（localStorage／TOP5） -->
 <div id="rankingOverlay">
   <div class="ranking-content">
     <div style="display:flex; justify-content:flex-end;">
       <button id="closeRanking" class="icon-btn" style="font-size:2rem;">✖</button>
     </div>
-    <h2>🏆 ローカルランキング TOP5</h2>
+    <h2>🏆自己ランキング🏆</h2>
     <ol id="rankingList" class="lb-list"></ol>
     <div id="lbEmpty" style="opacity:.7; text-align:center; padding:8px; display:none;">まだ記録がありません</div>
+    <!-- ★ここを追加：ランキング表示中でも即RESTART可能に -->
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+      <button id="lbRestart" class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">RESTART</button>
+    </div>
   </div>
 </div>
 
@@ -296,6 +278,8 @@ function waitForAnimations(elements,timeout=800){
 function startGame(){
   overlay.style.display='none';
   gameOverOverlay.style.display='none';
+  document.getElementById('rankingOverlay').style.display='none';
+
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
   running=true; updateUI(); renderBoard();
@@ -313,7 +297,7 @@ function updateUI(){
   comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
 
-/* === ローカルランキング（localStorage / TOP5） === */
+/* === ローカルランキング（TOP5） === */
 const TOP_LIMIT = 5;
 const KEY_LB   = 'm3_local_lb_v1';
 const KEY_NAME = 'm3_last_name';
@@ -387,6 +371,7 @@ function showGameOver(){
       const name = document.getElementById('playerName').value.trim();
       localStorage.setItem(KEY_NAME, name);
       insertScore(name, score);
+      // 登録後：ランキングを表示しつつ、そこからも即RESTART可能
       gameOverOverlay.style.display='none';
       document.getElementById('rankingOverlay').style.display='flex';
       renderLB();
@@ -593,12 +578,15 @@ resumeBtn.addEventListener('click',()=>{
   },1000);
 });
 
-/* ランキング（ローカルTOP5） */
+/* ランキング表示（TOP5）＋RESTART */
 const rankingBtn = document.getElementById('rankingBtn');
 const rankingOverlay = document.getElementById('rankingOverlay');
 const closeRanking = document.getElementById('closeRanking');
+const lbRestartBtn = document.getElementById('lbRestart');
+
 rankingBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='flex'; renderLB(); });
 closeRanking.addEventListener('click', ()=> rankingOverlay.style.display='none');
+lbRestartBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; startGame(); });
 
 /* iOS対策：スクロール阻止 */
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
