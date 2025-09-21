@@ -39,10 +39,21 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
 .rules-table-fixed th {border-bottom:2px solid #ffde59;}
 
 /* ▶ 一時停止オーバーレイ（可変サイズ） */
-.pause-overlay {
-  position:absolute; inset:0; display:none; align-items:center; justify-content:center;
-  background:black; z-index:20; flex-direction:column; color:white; border-radius:10px;
-  gap:16px; padding:16px;
+.pause-overlay{
+  position: fixed;      /* ← absolute から fixed に */
+  inset: 0;             /* 画面全体を覆う */
+  width: 100vw;
+  height: 100dvh;       /* モバイルのアドレスバー変動にも追従 */
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: black;
+  z-index: 20;
+  flex-direction: column;
+  color: white;
+  border-radius: 0;     /* 角丸をなくして隙間ゼロに */
+  gap: 16px;
+  padding: 16px;
 }
 #pauseText{
   font-weight:900;
