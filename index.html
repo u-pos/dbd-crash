@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
       content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Match-3 Mobile Swipe</title>
+<title>DBDクラッシュ</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
 html,body {
@@ -13,11 +13,12 @@ html,body {
   background:#111; color:#fff; font-family:sans-serif;
 }
 .wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; }
-.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; }
+.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; width:94%; max-width:720px; }
 .panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
 #combo {color:#ffde59;font-weight:900;font-size:3.5vw;}
+#boardWrap { position:relative; width:94%; max-width:720px; }
 .board {background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
-display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;}
+display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;margin:0 auto;}
 .cell {width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;background:#111a2a;
 display:flex;align-items:center;justify-content:center;}
 .cell img {width:100%;height:100%;object-fit:cover;pointer-events:none;}
@@ -29,37 +30,58 @@ display:flex;align-items:center;justify-content:center;}
 }
 .start-btn {background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;
 padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
-#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;}
+#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
 .bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
 .icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
-.rules-table-fixed {margin-top:0.5rem;font-size:0.75rem;width:100%;}
+.rules-table-fixed {margin-top:0.8rem;font-size:0.9rem;width:94%;max-width:720px;}
 .rules-table-fixed table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
-.rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.2rem;}
+.rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.35rem;}
 .rules-table-fixed th {border-bottom:2px solid #ffde59;}
-.pause-overlay {position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:black;z-index:20;
-flex-direction:column;color:white;font-size:1.5rem;}
-/* ランキングオーバーレイ */
-#rankingOverlay {
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.7);
-  z-index: 100;
+
+/* ▶ 一時停止オーバーレイ（可変サイズ） */
+.pause-overlay{
+  position: fixed;      /* ← absolute から fixed に */
+  inset: 0;             /* 画面全体を覆う */
+  width: 100vw;
+  height: 100dvh;       /* モバイルのアドレスバー変動にも追従 */
   display: none;
-  justify-content: center;
   align-items: center;
+  justify-content: center;
+  background: black;
+  z-index: 20;
+  flex-direction: column;
+  color: white;
+  border-radius: 0;     /* 角丸をなくして隙間ゼロに */
+  gap: 16px;
+  padding: 16px;
+}
+#pauseText{
+  font-weight:900;
+  font-size:clamp(22px, 8vw, 56px);
+  letter-spacing:.02em;
+  text-shadow:0 2px 10px rgba(0,0,0,.35);
+}
+.pause-overlay .start-btn{ font-size:clamp(18px, 6vw, 28px); padding:12px 28px; }
+
+/* ランキング（localStorage / TOP5） */
+#rankingOverlay {
+  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
+  z-index: 100; display: none; justify-content: center; align-items: center; padding: 12px;
 }
 .ranking-content {
-  background: rgba(255,255,255,0.95);
-  color: #000;
-  padding: 1rem;
-  border-radius: 8px;
-  width: 80%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
-  max-height: 80%;
-  overflow-y: auto;
+  background: rgba(20,20,24,0.95); color: #fff; padding: 14px; border-radius: 12px;
+  width: 92vw; max-width: 580px; display: flex; flex-direction: column; max-height: 80vh; overflow-y: auto;
 }
+.ranking-content h2 { text-align:center; margin: 4px 0 8px; }
+.lb-list { list-style: none; padding: 0; margin: 0; }
+.lb-list li {
+  display:flex; gap:8px; align-items:center; justify-content:space-between;
+  background: rgba(255,255,255,0.06); margin:6px 0; padding:8px 10px; border-radius:10px;
+}
+.lb-rank { width:2.4em; text-align:center; font-weight:900; }
+.lb-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lb-score { min-width:5em; text-align:right; font-weight:900; }
+.lb-time  { opacity:.7; font-size:12px; margin-left:8px; }
 </style>
 </head>
 <body>
@@ -69,22 +91,31 @@ flex-direction:column;color:white;font-size:1.5rem;}
     <div class="panel">残り <span id="time">60</span> 秒</div>
     <div class="panel"><span id="combo"></span></div>
   </div>
-  <div id="boardWrap" style="position:relative;">
+
+  <div id="boardWrap">
     <div id="board" class="board"></div>
+
+    <!-- スタート -->
     <div id="overlay" class="start-overlay">
       <button id="startBtn" class="start-btn">START</button>
     </div>
+
+    <!-- 一時停止 -->
     <div id="pauseOverlay" class="pause-overlay">
       <div id="pauseText">一時停止中</div>
-      <button id="resumeBtn" class="start-btn">▶</button>
+      <button id="resumeBtn" class="start-btn">▶ 再開</button>
     </div>
-    <div id="gameOverOverlay" style="display:none;"></div>
+
+    <!-- 結果 -->
+    <div id="gameOverOverlay"></div>
   </div>
+
   <div class="bottom-buttons">
-    <button id="muteBtn" class="icon-btn">🔇</button>
-    <button id="pauseBtn" class="icon-btn">⏸</button>
-    <button id="rankingBtn" class="icon-btn">🏆</button>
+    <button id="muteBtn" class="icon-btn" title="ミュート切替">🔇</button>
+    <button id="pauseBtn" class="icon-btn" title="一時停止">⏸</button>
+    <button id="rankingBtn" class="icon-btn" title="ローカルランキング">🏆</button>
   </div>
+
   <div class="rules-table-fixed">
     <table>
       <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
@@ -92,74 +123,38 @@ flex-direction:column;color:white;font-size:1.5rem;}
         <tr><td>3個消し</td><td>100点</td></tr>
         <tr><td>4個消し</td><td>300点</td></tr>
         <tr><td>5個消し</td><td>500点</td></tr>
-        <tr>
-          <td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍...となる。</td>
-        </tr>
+        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍...（最大10倍）</td></tr>
       </tbody>
     </table>
   </div>
 </div>
 
-<!-- ランキングオーバーレイ -->
+<!-- ランキング（localStorage／TOP5） -->
 <div id="rankingOverlay">
   <div class="ranking-content">
-    <button id="closeRanking" class="icon-btn" style="font-size:2rem;align-self:flex-end;">✖</button>
-    <h2 id="rankingTitle" style="text-align:center;">🏆 ランキング TOP15 🏆</h2>
-    <div id="rankingList" style="font-size:4vw;"></div>
+    <div style="display:flex; justify-content:flex-end;">
+      <button id="closeRanking" class="icon-btn" style="font-size:2rem;">✖</button>
+    </div>
+    <h2>🏆自己ランキング🏆</h2>
+    <ol id="rankingList" class="lb-list"></ol>
+    <div id="lbEmpty" style="opacity:.7; text-align:center; padding:8px; display:none;">まだ記録がありません</div>
+    <!-- ★ここを追加：ランキング表示中でも即RESTART可能に -->
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+      <button id="lbRestart" class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">RESTART</button>
+    </div>
   </div>
 </div>
 
+<!-- サウンド -->
 <audio id="sndStart" src="s.mp3" preload="auto"></audio>
 <audio id="sndClear" src="cc.mp3" preload="auto"></audio>
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
-<!-- ★追加: ランクイン時の効果音 -->
-<audio id="sndCong" src="cong.mp3" preload="auto"></audio>
 
 <script>
-// ===== APIエンドポイント =====
-const API_BASE_URL = 'https://junkhin.com/api/';
-
-// ===== ユーティリティ =====
-function escapeHtml(str){
-  return str.replace(/[&<>"']/g, m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-}
-
-// ===== ランキング関連 =====
-const TOP_LIMIT = 15; // ★TOP15に固定
-
-async function loadRanking(){
-  try{
-    const r = await fetch(API_BASE_URL+'get_scores.php');
-    const data = await r.json();
-    if(data.success){
-      // 上位15件だけ表示（サーバが20返しても前側から切る）
-      const list = (data.scores||[]).slice(0, TOP_LIMIT);
-      let html = '<ol>';
-      list.forEach(s => {
-        html += `<li>${escapeHtml(s.name)} - ${s.score}</li>`;
-      });
-      html += '</ol>';
-      document.getElementById('rankingList').innerHTML = html;
-    }else{
-      document.getElementById('rankingList').innerHTML = '<p>取得失敗</p>';
-    }
-  }catch(e){
-    console.error(e);
-    document.getElementById('rankingList').innerHTML = '<p>通信エラー</p>';
-  }
-}
-
-document.getElementById('rankingBtn').addEventListener('click',()=>{
-  loadRanking();
-  document.getElementById('rankingOverlay').style.display='flex';
-});
-document.getElementById('closeRanking').addEventListener('click',()=>{
-  document.getElementById('rankingOverlay').style.display='none';
-});
-
-// ===== ゲーム本体 =====
+// ===== ゲーム（オフライン） =====
 const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
 let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
+
 const boardEl=document.getElementById('board');
 const scoreEl=document.getElementById('score');
 const timeEl=document.getElementById('time');
@@ -169,13 +164,13 @@ const gameOverOverlay=document.getElementById('gameOverOverlay');
 const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
 const bgm=document.getElementById('bgm');
-const sndCong=document.getElementById('sndCong'); // ★
 
 bgm.volume=0.2;
 
 function idx(r,c){return r*COLS+c}
 function rc(i){return [Math.floor(i/COLS),i%COLS]}
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
+
 function generateBoard(){
   const b=new Array(ROWS*COLS).fill(0);
   for(let r=0;r<ROWS;r++){
@@ -194,8 +189,10 @@ function generateBoard(){
   }
   return b;
 }
+
 function findMatches(b){
   const clear=new Set();
+  // 横
   for(let r=0;r<ROWS;r++){
     let runT=null, runS=0, runL=0;
     for(let c=0;c<COLS;c++){
@@ -208,6 +205,7 @@ function findMatches(b){
     }
     if(runT && runL>=3) for(let k=0;k<runL;k++) clear.add(idx(r,runS+k));
   }
+  // 縦
   for(let c=0;c<COLS;c++){
     let runT=null, runS=0, runL=0;
     for(let r=0;r<ROWS;r++){
@@ -222,6 +220,7 @@ function findMatches(b){
   }
   return Array.from(clear).sort((a,b)=>a-b);
 }
+
 function collapseBoard(b){
   const nb=b.slice();
   for(let c=0;c<COLS;c++){
@@ -239,7 +238,9 @@ function collapseBoard(b){
   }
   return nb;
 }
+
 function swapTiles(b,i1,i2){const nb=b.slice();[nb[i1],nb[i2]]=[nb[i2],nb[i1]];return nb;}
+
 function scoreForMatch(count){
   switch(count){
     case 3:return 100;
@@ -248,6 +249,7 @@ function scoreForMatch(count){
     default:return 500+(count-5)*100;
   }
 }
+
 function renderBoard(prevBoard){
   boardEl.innerHTML='';
   for(let i=0;i<board.length;i++){
@@ -272,6 +274,7 @@ function renderBoard(prevBoard){
     boardEl.appendChild(cell);
   }
 }
+
 function waitForAnimations(elements,timeout=800){
   return new Promise(res=>{
     if(!elements || elements.length===0) return res();
@@ -284,7 +287,6 @@ function waitForAnimations(elements,timeout=800){
 }
 
 function startGame(){
-  // 全オーバーレイを非表示
   overlay.style.display='none';
   gameOverOverlay.style.display='none';
   document.getElementById('rankingOverlay').style.display='none';
@@ -292,114 +294,114 @@ function startGame(){
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
   running=true; updateUI(); renderBoard();
-  sndStart.currentTime=0; sndStart.play();
+  try{ sndStart.currentTime=0; sndStart.play(); }catch(_){}
   timerId=setInterval(()=>{
     timeLeft--;
     if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); }
     updateUI();
   },1000);
 }
+
 function updateUI(){
   scoreEl.textContent=score;
   timeEl.textContent=timeLeft;
   comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
 
-// 共通のRESTART表示
-function showRestartOverlay(extraMsg=''){
-  gameOverOverlay.style.display='flex';
-  gameOverOverlay.innerHTML=`
-    ${extraMsg ? `<div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">${extraMsg}</div>` : ''}
-    <div>最終スコア</div>
-    <div style="font-size:15vw; font-weight:900;">${score}</div>
-    <button id="restartBtn" class="start-btn">RESTART</button>
-  `;
-  document.getElementById('restartBtn').onclick=()=>{
-    startGame(); gameOverOverlay.style.display='none';
-  };
-}
+/* === ローカルランキング（TOP5） === */
+const TOP_LIMIT = 5;
+const KEY_LB   = 'm3_local_lb_v1';
+const KEY_NAME = 'm3_last_name';
 
-// TOP15入り判定（get_scores.phpの結果で判定）
-async function isTop15(scoreVal){
-  try{
-    const r = await fetch(API_BASE_URL+'get_scores.php');
-    const data = await r.json();
-    if(!data.success) return false;
-    const list = (data.scores||[]).slice(0, TOP_LIMIT);
-    if(list.length < TOP_LIMIT) return true; // まだ15枠埋まってない
-    const fifteenth = list[TOP_LIMIT-1]?.score ?? -Infinity;
-    return Number(scoreVal) >= Number(fifteenth);
-  }catch(e){
-    console.error('TOP15判定失敗', e);
-    return false; // 通信失敗時は安全側でfalse
+function getLB(){
+  try { return JSON.parse(localStorage.getItem(KEY_LB) || '[]'); }
+  catch { return []; }
+}
+function saveLB(list){
+  localStorage.setItem(KEY_LB, JSON.stringify(list));
+}
+function insertScore(name,score){
+  const entry = { name: (name||'').trim() || '名無しさん', score: Number(score)||0, ts: new Date().toISOString() };
+  const lb = getLB();
+  lb.push(entry);
+  lb.sort((a,b)=> b.score - a.score || new Date(a.ts) - new Date(b.ts)); // 高得点優先、同点は古い方が上
+  const cut = lb.slice(0, TOP_LIMIT);
+  saveLB(cut);
+  return cut.findIndex(x => x === entry);
+}
+function renderLB(){
+  const listEl = document.getElementById('rankingList');
+  const emptyEl = document.getElementById('lbEmpty');
+  const lb = getLB();
+  listEl.innerHTML = '';
+  if(lb.length === 0){
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+  lb.forEach((r, i) => {
+    const li = document.createElement('li');
+    li.innerHTML = `
+      <span class="lb-rank">${i+1}</span>
+      <span class="lb-name">${esc(r.name)}</span>
+      <span class="lb-score">${Number(r.score).toLocaleString()}</span>
+      <span class="lb-time">${fmtDate(r.ts)}</span>
+    `;
+    listEl.appendChild(li);
+  });
+}
+function isTopLocal(sc){
+  const lb = getLB();
+  if(lb.length < TOP_LIMIT) return sc > 0;
+  return Number(sc) >= Number(lb[lb.length-1]?.score ?? -Infinity);
+}
+function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
+function fmtDate(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` }catch{ return '' } }
+
+// 結果表示（ローカルTOP5判定＆登録）
+function showGameOver(){
+  bgm.pause();
+  const qualifies = isTopLocal(score);
+  const lastName = localStorage.getItem(KEY_NAME) || '';
+
+  gameOverOverlay.style.display='flex';
+  if(qualifies){
+    gameOverOverlay.innerHTML=`
+      <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 TOP5にランクイン！ 🎉</div>
+      <div>最終スコア</div>
+      <div style="font-size:15vw; font-weight:900;">${score}</div>
+      <input type="text" id="playerName" maxlength="16" placeholder="名前（未入力で『名無しさん』）" value="${esc(lastName)}"
+             style="font-size:5vw;padding:8px 10px;margin:1rem 0;border-radius:10px;border:none;outline:none;"/>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
+        <button id="saveNameBtn" class="start-btn">登録</button>
+        <button id="restartBtn"  class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">RESTART</button>
+      </div>
+    `;
+    document.getElementById('restartBtn').onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
+    document.getElementById('saveNameBtn').onclick=()=>{
+      const name = document.getElementById('playerName').value.trim();
+      localStorage.setItem(KEY_NAME, name);
+      insertScore(name, score);
+      // 登録後：ランキングを表示しつつ、そこからも即RESTART可能
+      gameOverOverlay.style.display='none';
+      document.getElementById('rankingOverlay').style.display='flex';
+      renderLB();
+    };
+  }else{
+    gameOverOverlay.innerHTML=`
+      <div>最終スコア</div>
+      <div style="font-size:15vw; font-weight:900;">${score}</div>
+      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
+        <button id="restartBtn"  class="start-btn">RESTART</button>
+        <button id="showLBBtn"  class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">ランキング</button>
+      </div>
+    `;
+    document.getElementById('restartBtn').onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
+    document.getElementById('showLBBtn').onclick=()=>{ document.getElementById('rankingOverlay').style.display='flex'; renderLB(); };
   }
 }
 
-function showGameOver(){
-  bgm.pause();
-  fetch(API_BASE_URL+'check_rank.php',{
-    method:'POST',
-    headers:{'Content-Type':'application/x-www-form-urlencoded'},
-    body:new URLSearchParams({score})
-  })
-  .then(res=>res.json())
-  .then(async data=>{
-    // まずTOP15かどうかを自力判定
-    const top15 = await isTop15(score);
-
-    if(top15){
-      // お祝い表示＋効果音
-      try{ sndCong.currentTime=0; sndCong.play().catch(()=>{});}catch(_){}
-      gameOverOverlay.style.display='flex';
-      gameOverOverlay.innerHTML=`
-        <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 おめでとうございます。TOP15にランクインしました！ 🎉</div>
-        <div>最終スコア</div>
-        <div style="font-size:15vw; font-weight:900;">${score}</div>
-        <input type="text" id="playerName" maxlength="50" placeholder="名前を入力" style="font-size:5vw;padding:5px;margin:1rem 0;">
-        <button id="saveNameBtn" class="start-btn">登録</button>
-      `;
-      const saveBtn = document.getElementById('saveNameBtn');
-      saveBtn.onclick=()=>{
-        const name=document.getElementById('playerName').value.trim();
-        if(!name){alert('名前を入力してください');return;}
-        saveBtn.disabled=true; saveBtn.textContent='送信中...';
-
-        fetch(API_BASE_URL+'save_score.php',{
-          method:'POST',
-          headers:{'Content-Type':'application/x-www-form-urlencoded'},
-          body:new URLSearchParams({name,score})
-        })
-        .then(async r=>{
-          let d;
-          try{ d = await r.json(); }catch(e){ d = { success: r.ok }; }
-          return d;
-        })
-        .then(res=>{
-          if(res && res.success){
-            loadRanking();
-            showRestartOverlay(); // 登録後はRESTART
-          }else{
-            alert((res && res.error) || '登録失敗');
-            saveBtn.disabled=false; saveBtn.textContent='登録';
-          }
-        })
-        .catch(err=>{
-          console.error(err);
-          // ネットワーク不調でもRESTARTへ
-          showRestartOverlay();
-        });
-      };
-    }else{
-      // ランク外はそのままRESTART
-      showRestartOverlay();
-    }
-  })
-  .catch(()=>{
-    // 判定失敗時もリスタート可能に
-    showRestartOverlay();
-  });
-}
-
+/* === タッチ操作 & ロジック === */
 function groupMatches(boardArr, indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -432,11 +434,13 @@ boardEl.addEventListener('touchstart',e=>{
   touchStartIndex=Number(t.dataset.i);
   startX=e.touches[0].clientX; startY=e.touches[0].clientY;
 },{passive:false});
+
 boardEl.addEventListener('touchmove',e=>{
   if(touchStartIndex===null) return;
   e.preventDefault();
 },{passive:false});
-boardEl.addEventListener('touchend',e=>{
+
+boardEl.addEventListener('touchend',async e=>{
   if(touchStartIndex===null||!running||processing){ touchStartIndex=null; return; }
   const dx=e.changedTouches[0].clientX-startX;
   const dy=e.changedTouches[0].clientY-startY;
@@ -447,7 +451,7 @@ boardEl.addEventListener('touchend',e=>{
   if(absDx>absDy) targetC += (dx>0?1:-1); else targetR += (dy>0?1:-1);
   if(targetR<0||targetR>=ROWS||targetC<0||targetC>=COLS){ touchStartIndex=null; return; }
   const targetIndex = idx(targetR,targetC);
-  playerMove(touchStartIndex, targetIndex);
+  await playerMove(touchStartIndex, targetIndex);
   touchStartIndex=null;
 },{passive:false});
 
@@ -455,6 +459,7 @@ async function playerMove(i1,i2){
   if(!running||processing) return;
   if(!isAdjacent(i1,i2)) return;
   processing=true;
+
   const newB = swapTiles(board,i1,i2);
   const initialMatches = findMatches(newB);
   if(initialMatches.length === 0){
@@ -463,15 +468,17 @@ async function playerMove(i1,i2){
     processing=false;
     return;
   }
+
   renderSwapAnimation(i1,i2,true);
   board = newB;
-  sndClear.currentTime = 0; sndClear.play();
+  try{ sndClear.currentTime = 0; sndClear.play(); }catch(_){}
   let chain = 0;
+
   while(true){
     const matches = findMatches(board);
     if(matches.length === 0) break;
     chain++;
-    sndClear.currentTime = 0; sndClear.play();
+    try{ sndClear.currentTime = 0; sndClear.play(); }catch(_){}
     const groups = groupMatches(board,matches);
     let gained = 0;
     for(let g of groups){
@@ -479,6 +486,7 @@ async function playerMove(i1,i2){
     }
     score += gained;
     combo = Math.min(10, chain);
+
     const imgEls = matches.map(i => {
       const cell = boardEl.querySelector(`.cell[data-i='${i}']`);
       return cell ? cell.querySelector('img') : null;
@@ -521,6 +529,7 @@ async function playerMove(i1,i2){
     await new Promise(res => setTimeout(res, basePerTile * maxTiles + 80));
     newCells.forEach(cell => { cell.style.transition = ''; cell.style.transform = ''; });
   }
+
   updateUI();
   processing=false;
 }
@@ -549,17 +558,21 @@ function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r
 function renderBoardInitial(){board=generateBoard(); renderBoard();}
 renderBoardInitial(); updateUI();
 
+/* ボタン */
 document.getElementById('startBtn').addEventListener('click',startGame);
+
 const muteBtn=document.getElementById('muteBtn');
 let muted=false;
 muteBtn.addEventListener('click',()=>{
   muted=!muted;
-  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted; sndCong.muted=muted; // ★congも反映
+  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
   muteBtn.textContent=muted?'🔈':'🔇';
 });
+
 const pauseOverlay=document.getElementById('pauseOverlay');
 const pauseBtn=document.getElementById('pauseBtn');
 const resumeBtn=document.getElementById('resumeBtn');
+
 pauseBtn.addEventListener('click',()=>{
   if(!running) return;
   clearInterval(timerId); running=false; bgm.pause();
@@ -575,7 +588,18 @@ resumeBtn.addEventListener('click',()=>{
     updateUI();
   },1000);
 });
-// iOS対策：スクロール阻止
+
+/* ランキング表示（TOP5）＋RESTART */
+const rankingBtn = document.getElementById('rankingBtn');
+const rankingOverlay = document.getElementById('rankingOverlay');
+const closeRanking = document.getElementById('closeRanking');
+const lbRestartBtn = document.getElementById('lbRestart');
+
+rankingBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='flex'; renderLB(); });
+closeRanking.addEventListener('click', ()=> rankingOverlay.style.display='none');
+lbRestartBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; startGame(); });
+
+/* iOS対策：スクロール阻止 */
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
 </script>
 </body>
