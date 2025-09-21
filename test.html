@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
       content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>Match-3 Mobile Swipe（オフライン＋ローカルランキング）</title>
+<title>Match-3 Mobile Swipe（オフライン＋ローカルTOP5）</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
 html,body {
@@ -37,10 +37,28 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
 .rules-table-fixed table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
 .rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.35rem;}
 .rules-table-fixed th {border-bottom:2px solid #ffde59;}
-.pause-overlay {position:absolute;inset:0;display:none;align-items:center;justify-content:center;background:black;z-index:20;
-flex-direction:column;color:white;font-size:1.5rem;border-radius:10px;}
 
-/* ランキングオーバーレイ（localStorage） */
+/* ▶ 一時停止オーバーレイを画面にフィットさせる */
+.pause-overlay {
+  position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+  background:black; z-index:20; flex-direction:column; color:white; border-radius:10px;
+  /* 端末に合わせて自動拡大縮小 */
+  gap:16px; padding:16px;
+}
+#pauseText{
+  font-weight:900;
+  /* 画面幅に応じて可変。スマホ〜タブレットで見やすいサイズ */
+  font-size:clamp(22px, 8vw, 56px);
+  letter-spacing: .02em;
+  text-shadow: 0 2px 10px rgba(0,0,0,.35);
+}
+.pause-overlay .start-btn{
+  /* 再開ボタンも大きめに */
+  font-size:clamp(18px, 6vw, 28px);
+  padding:12px 28px;
+}
+
+/* ランキングオーバーレイ（localStorage / TOP5） */
 #rankingOverlay {
   position: fixed;
   inset: 0;
@@ -91,10 +109,10 @@ flex-direction:column;color:white;font-size:1.5rem;border-radius:10px;}
       <button id="startBtn" class="start-btn">START</button>
     </div>
 
-    <!-- 一時停止 -->
+    <!-- 一時停止（サイズ自動調整） -->
     <div id="pauseOverlay" class="pause-overlay">
       <div id="pauseText">一時停止中</div>
-      <button id="resumeBtn" class="start-btn">▶</button>
+      <button id="resumeBtn" class="start-btn">▶ 再開</button>
     </div>
 
     <!-- 結果 -->
@@ -122,13 +140,13 @@ flex-direction:column;color:white;font-size:1.5rem;border-radius:10px;}
   </div>
 </div>
 
-<!-- ランキング（localStorage表示用） -->
+<!-- ランキング（localStorage表示用／TOP5） -->
 <div id="rankingOverlay">
   <div class="ranking-content">
     <div style="display:flex; justify-content:flex-end;">
       <button id="closeRanking" class="icon-btn" style="font-size:2rem;">✖</button>
     </div>
-    <h2>🏆 ローカルランキング TOP15</h2>
+    <h2>🏆 ローカルランキング TOP5</h2>
     <ol id="rankingList" class="lb-list"></ol>
     <div id="lbEmpty" style="opacity:.7; text-align:center; padding:8px; display:none;">まだ記録がありません</div>
   </div>
@@ -295,7 +313,8 @@ function updateUI(){
   comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
 
-// === ローカルランキング（localStorage） ===
+/* === ローカルランキング（localStorage / TOP5） === */
+const TOP_LIMIT = 5;
 const KEY_LB   = 'm3_local_lb_v1';
 const KEY_NAME = 'm3_last_name';
 
@@ -311,9 +330,9 @@ function insertScore(name,score){
   const lb = getLB();
   lb.push(entry);
   lb.sort((a,b)=> b.score - a.score || new Date(a.ts) - new Date(b.ts)); // 高得点優先、同点は古い方が上
-  const cut = lb.slice(0,15);
+  const cut = lb.slice(0, TOP_LIMIT);
   saveLB(cut);
-  return cut.findIndex(x => x === entry); // ランク番号（0始まり）
+  return cut.findIndex(x => x === entry);
 }
 function renderLB(){
   const listEl = document.getElementById('rankingList');
@@ -336,24 +355,24 @@ function renderLB(){
     listEl.appendChild(li);
   });
 }
-function isTop15Local(sc){
+function isTopLocal(sc){
   const lb = getLB();
-  if(lb.length < 15) return sc > 0; // 何かしらスコアがあればOK
+  if(lb.length < TOP_LIMIT) return sc > 0;
   return Number(sc) >= Number(lb[lb.length-1]?.score ?? -Infinity);
 }
 function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
 function fmtDate(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` }catch{ return '' } }
 
-// 結果表示（ローカルランク判定＆登録）
+// 結果表示（ローカルTOP5判定＆登録）
 function showGameOver(){
   bgm.pause();
-  const qualifies = isTop15Local(score);
+  const qualifies = isTopLocal(score);
   const lastName = localStorage.getItem(KEY_NAME) || '';
 
   gameOverOverlay.style.display='flex';
   if(qualifies){
     gameOverOverlay.innerHTML=`
-      <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 TOP15にランクイン！ 🎉</div>
+      <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 TOP5にランクイン！ 🎉</div>
       <div>最終スコア</div>
       <div style="font-size:15vw; font-weight:900;">${score}</div>
       <input type="text" id="playerName" maxlength="16" placeholder="名前（未入力で『名無しさん』）" value="${esc(lastName)}"
@@ -368,7 +387,6 @@ function showGameOver(){
       const name = document.getElementById('playerName').value.trim();
       localStorage.setItem(KEY_NAME, name);
       insertScore(name, score);
-      // 登録後はランキングを見せる
       gameOverOverlay.style.display='none';
       document.getElementById('rankingOverlay').style.display='flex';
       renderLB();
@@ -387,7 +405,7 @@ function showGameOver(){
   }
 }
 
-// === タッチ操作 & ロジック ===
+/* === タッチ操作 & ロジック === */
 function groupMatches(boardArr, indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -544,7 +562,7 @@ function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r
 function renderBoardInitial(){board=generateBoard(); renderBoard();}
 renderBoardInitial(); updateUI();
 
-// ボタン
+/* ボタン */
 document.getElementById('startBtn').addEventListener('click',startGame);
 
 const muteBtn=document.getElementById('muteBtn');
@@ -575,14 +593,14 @@ resumeBtn.addEventListener('click',()=>{
   },1000);
 });
 
-// ランキング表示
+/* ランキング（ローカルTOP5） */
 const rankingBtn = document.getElementById('rankingBtn');
 const rankingOverlay = document.getElementById('rankingOverlay');
 const closeRanking = document.getElementById('closeRanking');
 rankingBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='flex'; renderLB(); });
 closeRanking.addEventListener('click', ()=> rankingOverlay.style.display='none');
 
-// iOS対策：スクロール阻止
+/* iOS対策：スクロール阻止 */
 document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
 </script>
 </body>
