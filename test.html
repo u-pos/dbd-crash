@@ -369,10 +369,10 @@ function showGameOver(){
     const old=content.querySelector('.top5-banner'); if(old) old.remove();
     const banner=document.createElement('div');
     banner.className='top5-banner';
-    banner.textContent='TOP5にランクイン！';
+    banner.textContent='TOP5にランクインしました！';
     banner.style.cssText='text-align:center;margin:6px 0 10px;font-weight:900;color:#ffde59;';
     content.insertBefore(banner, content.children[1]);
-    setTimeout(()=>banner.remove(),2500);
+    setTimeout(()=>banner.remove(),3500);
   }else{
     gameOverOverlay.style.display='flex';
     gameOverOverlay.innerHTML=`
