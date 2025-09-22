@@ -144,13 +144,13 @@ img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-dra
   </div>
 </div>
 
-<!-- サウンド -->
-<audio id="sndStart" src="s.mp3" preload="auto"></audio>
-<audio id="sndClear" src="cc.mp3" preload="auto"></audio>
-<audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
+<!-- サウンド（playsinline はお守り） -->
+<audio id="sndStart" src="s.mp3" preload="auto" playsinline></audio>
+<audio id="sndClear" src="cc.mp3" preload="auto" playsinline></audio>
+<audio id="bgm"      src="bgm2.mp3" preload="auto" loop playsinline></audio>
 
 <script>
-/* ===== iOSダブルタップ拡大対策＆スクロール阻止 ===== */
+/* ===== スクロール・ダブルタップ拡大阻止 ===== */
 let __lastTouchEnd=0;
 document.addEventListener('touchend',e=>{const now=Date.now(); if(now-__lastTouchEnd<=350)e.preventDefault(); __lastTouchEnd=now;},{passive:false});
 document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
@@ -168,28 +168,42 @@ const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
 const bgm=document.getElementById('bgm');
 
-/* ====== 音源まとめ＆ミュート一括反映／音解禁 ====== */
+/* ===== 音：アンロック＆ミュート制御 ===== */
 const AUDIOS=[bgm, sndClear, sndStart];
 let muted=false;
-function updateMuteState(){ AUDIOS.forEach(a=>{ a.muted = muted; }); }
-updateMuteState();
+function updateMuteState(){ AUDIOS.forEach(a=> a.muted = muted); }
+bgm.volume=0.25;
 
-// 初回タップで音の自動再生を許可（iOS対策）
-function unlockAudioOnce(){
-  AUDIOS.forEach(a=>{
-    a.muted = muted;
-    a.play().then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{});
+// WebAudio も一応用意（Safariの気分次第用）
+let audioCtx = null;
+function ensureAudioUnlocked(){
+  return new Promise(async (resolve)=>{
+    try{
+      if(!audioCtx){
+        const AC = window.AudioContext || window.webkitAudioContext;
+        if(AC){ audioCtx = new AC(); }
+      }
+      if(audioCtx && audioCtx.state === 'suspended'){
+        await audioCtx.resume().catch(()=>{});
+      }
+      // HTMLAudio 要素も明示的に play→即停止で解禁
+      for(const a of AUDIOS){
+        try{
+          a.muted = muted;              // 現在のミュート状態に合わせる
+          await a.play();
+          a.pause(); a.currentTime=0;
+        }catch(e){}
+      }
+    }finally{
+      resolve();
+    }
   });
-  document.removeEventListener('pointerdown', unlockAudioOnce);
-  document.removeEventListener('touchstart', unlockAudioOnce);
-  document.removeEventListener('click', unlockAudioOnce);
 }
-document.addEventListener('pointerdown', unlockAudioOnce, { once:true, passive:true });
-document.addEventListener('touchstart', unlockAudioOnce, { once:true, passive:true });
-document.addEventListener('click', unlockAudioOnce, { once:true });
+function safePlay(a){
+  try{ a.currentTime = 0; a.play().catch(()=>{}); }catch(_){}
+}
 
-bgm.volume=0.2;
-
+/* ==== 盤面ユーティリティ ==== */
 function idx(r,c){return r*COLS+c}
 function rc(i){return [Math.floor(i/COLS),i%COLS]}
 function randInt(min,max){return Math.floor(Math.random()*(max-min+1))+min}
@@ -212,7 +226,6 @@ function generateBoard(){
   }
   return b;
 }
-
 function findMatches(b){
   const clear=new Set();
   // 横
@@ -243,7 +256,6 @@ function findMatches(b){
   }
   return Array.from(clear).sort((a,b)=>a-b);
 }
-
 function collapseBoard(b){
   const nb=b.slice();
   for(let c=0;c<COLS;c++){
@@ -261,9 +273,7 @@ function collapseBoard(b){
   }
   return nb;
 }
-
 function swapTiles(b,i1,i2){const nb=b.slice();[nb[i1],nb[i2]]=[nb[i2],nb[i1]];return nb;}
-
 function scoreForMatch(count){
   switch(count){
     case 3:return 100;
@@ -272,7 +282,6 @@ function scoreForMatch(count){
     default:return 500+(count-5)*100;
   }
 }
-
 function renderBoard(prevBoard){
   boardEl.innerHTML='';
   for(let i=0;i<board.length;i++){
@@ -297,7 +306,6 @@ function renderBoard(prevBoard){
     boardEl.appendChild(cell);
   }
 }
-
 function waitForAnimations(elements,timeout=800){
   return new Promise(res=>{
     if(!elements || elements.length===0) return res();
@@ -309,16 +317,20 @@ function waitForAnimations(elements,timeout=800){
   });
 }
 
-/* ゲーム開始 */
-function startGame(){
+/* ==== ゲーム開始 ==== */
+async function startGame(){
   document.getElementById('rankingOverlay').style.display='none';
   gameOverOverlay.style.display='none';
 
-  updateMuteState();                // 音状態を反映
+  // ここで必ず音を“解禁”
+  await ensureAudioUnlocked();
+  updateMuteState();
+
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
   running=true; updateUI(); renderBoard();
-  try{ sndStart.currentTime=0; sndStart.play(); }catch(_){}
+  safePlay(sndStart);
+
   clearInterval(timerId);
   timerId=setInterval(()=>{
     timeLeft--;
@@ -326,11 +338,7 @@ function startGame(){
     updateUI();
   },1000);
 }
-
-function updateUI(){
-  scoreEl.textContent=score;
-  timeEl.textContent=timeLeft;
-}
+function updateUI(){ scoreEl.textContent=score; timeEl.textContent=timeLeft; }
 
 /* ===== ローカルランキング（TOP5：日付＋NEW／自動登録） ===== */
 const TOP_LIMIT=5;
@@ -373,7 +381,7 @@ function isTopLocal(sc){
   return Number(sc)>=Number(lb[lb.length-1]?.score ?? -Infinity);
 }
 
-/* 結果（自動登録＆表示） */
+/* ==== 結果（自動登録＆表示） ==== */
 function showGameOver(){
   bgm.pause();
   const qualifies=isTopLocal(score);
@@ -404,7 +412,7 @@ function showGameOver(){
   }
 }
 
-/* === タッチ＆ロジック === */
+/* ==== タッチ＆ロジック ==== */
 function groupMatches(boardArr,indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -471,14 +479,14 @@ async function playerMove(i1,i2){
 
   renderSwapAnimation(i1,i2,true);
   board=newB;
-  try{ sndClear.currentTime=0; sndClear.play(); }catch(_){}
+  safePlay(sndClear);
   let chain=0;
 
   while(true){
     const matches=findMatches(board);
     if(matches.length===0) break;
     chain++;
-    try{ sndClear.currentTime=0; sndClear.play(); }catch(_){}
+    safePlay(sndClear);
     const groups=groupMatches(board,matches);
     let gained=0;
     for(let g of groups){
@@ -530,7 +538,6 @@ async function playerMove(i1,i2){
   updateUI();
   processing=false;
 }
-
 function renderSwapAnimation(i1,i2,success){
   const cells=boardEl.children;
   const cell1=cells[i1], cell2=cells[i2];
@@ -548,13 +555,12 @@ function renderSwapAnimation(i1,i2,success){
     if(!success) renderBoard();
   },300);
 }
-
 function isAdjacent(i1,i2){ const [r1,c1]=rc(i1),[r2,c2]=rc(i2); return Math.abs(r1-r2)+Math.abs(c1-c2)===1; }
 function renderBoardInitial(){ board=generateBoard(); renderBoard(); }
 renderBoardInitial(); updateUI();
 
 /* ===== ボタン ===== */
-document.getElementById('startBtn').addEventListener('click',startGame);
+document.getElementById('startBtn').addEventListener('click', startGame);
 
 const muteBtn=document.getElementById('muteBtn');
 muteBtn.addEventListener('click',()=>{
@@ -571,9 +577,9 @@ pauseBtn.addEventListener('click',()=>{
   document.getElementById('pauseText').textContent='一時停止中';
   pauseOverlay.style.display='flex';
 });
-resumeBtn.addEventListener('click',()=>{
+resumeBtn.addEventListener('click',async ()=>{
   running=true; pauseOverlay.style.display='none';
-  updateMuteState();
+  await ensureAudioUnlocked(); updateMuteState();
   bgm.play().catch(()=>{});
   timerId=setInterval(()=>{
     timeLeft--;
