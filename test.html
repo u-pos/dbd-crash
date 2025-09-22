@@ -144,10 +144,13 @@ img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-dra
   </div>
 </div>
 
-<!-- サウンド（playsinline はお守り） -->
-<audio id="sndStart" src="s.mp3" preload="auto" playsinline></audio>
-<audio id="sndClear" src="cc.mp3" preload="auto" playsinline></audio>
-<audio id="bgm"      src="bgm2.mp3" preload="auto" loop playsinline></audio>
+<!-- サウンド（clear.mp3 → 無ければ cc.mp3 に自動フォールバック） -->
+<audio id="sndStart" preload="auto" playsinline src="s.mp3"></audio>
+<audio id="sndClear" preload="auto" playsinline>
+  <source src="clear.mp3" type="audio/mpeg">
+  <source src="cc.mp3" type="audio/mpeg">
+</audio>
+<audio id="bgm" preload="auto" loop playsinline src="bgm2.mp3"></audio>
 
 <script>
 /* ===== スクロール・ダブルタップ拡大阻止 ===== */
@@ -168,40 +171,75 @@ const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
 const bgm=document.getElementById('bgm');
 
-/* ===== 音：アンロック＆ミュート制御 ===== */
-const AUDIOS=[bgm, sndClear, sndStart];
-let muted=false;
-function updateMuteState(){ AUDIOS.forEach(a=> a.muted = muted); }
-bgm.volume=0.25;
+/* ===== 音：アンロック＆ミュート制御（クリア音はプール再生） ===== */
+const CLEAR_POOL_SIZE = 6;
 
-// WebAudio も一応用意（Safariの気分次第用）
+// クリア音プール（1本目は既存のsndClear、残りはclone）
+const clearPool = [sndClear, ...Array.from({length: CLEAR_POOL_SIZE - 1}, () => sndClear.cloneNode(true))];
+// iOS安定化のため、クローンもDOMに追加
+clearPool.slice(1).forEach(a => {
+  a.preload = 'auto';
+  a.playsInline = true;
+  document.body.appendChild(a);
+});
+
+// ミュート管理
+let muted = false;
+// すべての音源（BGM／開始音／クリア音プール）
+const AUDIOS = [bgm, sndStart, ...clearPool];
+
+function updateMuteState(){ AUDIOS.forEach(a => { a.muted = muted; }); }
+bgm.volume = 0.25;
+updateMuteState();
+
+// iOSでの自動再生解禁
 let audioCtx = null;
-function ensureAudioUnlocked(){
-  return new Promise(async (resolve)=>{
-    try{
-      if(!audioCtx){
-        const AC = window.AudioContext || window.webkitAudioContext;
-        if(AC){ audioCtx = new AC(); }
-      }
-      if(audioCtx && audioCtx.state === 'suspended'){
-        await audioCtx.resume().catch(()=>{});
-      }
-      // HTMLAudio 要素も明示的に play→即停止で解禁
-      for(const a of AUDIOS){
-        try{
-          a.muted = muted;              // 現在のミュート状態に合わせる
-          await a.play();
-          a.pause(); a.currentTime=0;
-        }catch(e){}
-      }
-    }finally{
-      resolve();
+async function ensureAudioUnlocked(){
+  try{
+    if(!audioCtx){
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if(AC) audioCtx = new AC();
     }
-  });
+    if(audioCtx && audioCtx.state === 'suspended'){
+      await audioCtx.resume().catch(()=>{});
+    }
+    // HTMLAudioも明示的に解禁
+    for(const a of AUDIOS){
+      try{
+        a.muted = muted;
+        await a.play();
+        a.pause(); a.currentTime = 0;
+      }catch(e){}
+    }
+  }catch(e){}
 }
+
+// 単発用：安全再生（開始音など）
 function safePlay(a){
   try{ a.currentTime = 0; a.play().catch(()=>{}); }catch(_){}
 }
+
+// 連続消去用：クリア音はローテーション再生
+let clearIdx = 0;
+function playClear(){
+  const a = clearPool[clearIdx++ % clearPool.length];
+  a.muted = muted;
+  try{
+    a.currentTime = 0;
+    a.play().catch(()=>{});
+  }catch(_){}
+}
+
+// 初回タップで解禁
+function unlockOnce(){
+  ensureAudioUnlocked();
+  document.removeEventListener('pointerdown', unlockOnce);
+  document.removeEventListener('touchstart', unlockOnce);
+  document.removeEventListener('click', unlockOnce);
+}
+document.addEventListener('pointerdown', unlockOnce, { once:true, passive:true });
+document.addEventListener('touchstart', unlockOnce, { once:true, passive:true });
+document.addEventListener('click', unlockOnce, { once:true });
 
 /* ==== 盤面ユーティリティ ==== */
 function idx(r,c){return r*COLS+c}
@@ -479,14 +517,14 @@ async function playerMove(i1,i2){
 
   renderSwapAnimation(i1,i2,true);
   board=newB;
-  safePlay(sndClear);
+  playClear(); // ← 取りこぼし防止のプール再生
   let chain=0;
 
   while(true){
     const matches=findMatches(board);
     if(matches.length===0) break;
     chain++;
-    safePlay(sndClear);
+    playClear(); // ← 連鎖中も毎回確実に鳴らす
     const groups=groupMatches(board,matches);
     let gained=0;
     for(let g of groups){
