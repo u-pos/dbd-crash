@@ -124,7 +124,7 @@ img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-dra
   <!-- 下：アイコン -->
  
   <span style="color:yellow;">【ルール説明】</span>
-  <footer class="footer">3つ以上つないでコンボを狙おう！<br />3つ:100点.4つ:300点,5つ:500点<br />↑上記の基本点数Xコンボ数が加算されるぞ！</footer>
+  <footer class="footer">3個以上つないでコンボを狙おう！<br />3個消し:100点.4個消し:300点,5個消し:500点<br />↑上記の基本点数Xコンボ数が加算されるぞ！</footer>
 
   <!-- 下部アイコン -->
   <div class="bottom-buttons">
@@ -372,7 +372,7 @@ function showGameOver(){
     banner.textContent='TOP5にランクインしました！';
     banner.style.cssText='text-align:center;margin:6px 0 10px;font-weight:900;color:#ffde59;';
     content.insertBefore(banner, content.children[1]);
-    setTimeout(()=>banner.remove(),3500);
+    setTimeout(()=>banner.remove(),4500);
   }else{
     gameOverOverlay.style.display='flex';
     gameOverOverlay.innerHTML=`
