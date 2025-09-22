@@ -7,92 +7,107 @@
 <title>DBDクラッシュ（ローカルTOP5／名前なし）</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
-html,body {
+html,body{
   margin:0; padding:0; width:100%; height:100%;
   overflow:hidden; overscroll-behavior:none;
   background:#111; color:#fff; font-family:sans-serif;
 }
-.wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
+.wrap{ width:100%; height:100%; display:flex; flex-direction:column; align-items:center; gap:.4rem; }
 
-/* 上部（SCORE/TIME/START） */
-.header { display:flex; justify-content:space-between; align-items:center; gap:.6rem; width:94%; max-width:720px; }
-.panel { background:rgba(255,255,255,0.06); padding:.6rem .9rem; border-radius:12px; min-width:28vw; text-align:center; font-size:4.2vw; font-weight:700; }
-.start-btn { background:#2563eb; border:none; color:#fff; font-weight:900; font-size:4.5vw; padding:.7rem 1.2rem; border-radius:999px; }
-
-/* 盤面 */
-#boardWrap { position:relative; width:94%; max-width:720px; }
-.board {background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
-display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;margin:0 auto;}
-.cell {width:var(--tile-size);height:var(--tile-size);border-radius:8px;overflow:hidden;background:#111a2a;
-display:flex;align-items:center;justify-content:center;}
-.cell img {width:100%;height:100%;object-fit:cover;pointer-events:none;}
-@keyframes vanish {0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
-.vanish {animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards;}
-
-/* 結果 */
-#gameOverOverlay {
-  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;
-  font-size:10vw;font-weight:900;gap:1vw;text-align:center;
+/* 上部（SCORE / TIME / START） */
+.header{
+  display:flex; align-items:center; justify-content:space-between; gap:.4rem;
+  width:94%; max-width:720px;
+}
+.panel{
+  background:rgba(255,255,255,0.06);
+  padding:.45rem .7rem;
+  border-radius:10px;
+  min-width:0;            /* ← これで縮められる */
+  flex:1 1 auto;          /* ← 横幅に合わせて伸縮 */
+  text-align:center;
+  font-size:clamp(12px,3.6vw,18px);  /* ← 小さめに */
+  font-weight:700; line-height:1.1;
+}
+.start-btn{
+  background:#2563eb; border:none; color:#fff;
+  font-weight:900; font-size:clamp(12px,3.6vw,18px);
+  padding:.55rem .9rem; border-radius:999px;
+  flex:0 0 auto;
 }
 
-/* ルール */
-.rules {margin-top:.4rem; font-size:.95rem; width:94%; max-width:720px;}
-.rules table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
-.rules th,.rules td {border-bottom:1px solid #555;padding:0.35rem;}
-.rules th {border-bottom:2px solid #ffde59;}
+/* 盤面 */
+#boardWrap{ position:relative; width:94%; max-width:720px; }
+.board{
+  background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);
+  padding:6px; border-radius:10px;
+  display:grid; grid-template-columns:repeat(var(--cols),var(--tile-size));
+  gap:4px; touch-action:none; box-sizing:border-box; margin:0 auto;
+}
+.cell{ width:var(--tile-size); height:var(--tile-size); border-radius:8px; overflow:hidden; background:#111a2a;
+  display:flex; align-items:center; justify-content:center; }
+.cell img{ width:100%; height:100%; object-fit:cover; pointer-events:none; }
+@keyframes vanish{0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
+.vanish{ animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards; }
+
+/* 結果 */
+#gameOverOverlay{
+  position:absolute; inset:0; display:none; align-items:center; justify-content:center;
+  background:rgba(0,0,0,0.35); border-radius:10px; flex-direction:column; z-index:10;
+  font-size:10vw; font-weight:900; gap:1vw; text-align:center;
+}
 
 /* 下部アイコン */
-.bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.6rem;}
-.icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
+.bottom-buttons{ display:flex; justify-content:center; align-items:center; gap:1.2rem; margin-top:.4rem; }
+.icon-btn{ background:none; border:none; font-size:2.6rem; color:white; cursor:pointer; }
 
 /* 一時停止（全画面） */
 .pause-overlay{
-  position: fixed; inset: 0; width: 100vw; height: 100dvh;
-  display: none; align-items: center; justify-content: center;
-  background: black; z-index: 20; flex-direction: column; color: white;
-  border-radius: 0; gap: 16px; padding: 16px;
+  position: fixed; inset:0; width:100vw; height:100dvh;
+  display:none; align-items:center; justify-content:center;
+  background:black; z-index:20; flex-direction:column; color:white;
+  border-radius:0; gap:16px; padding:16px;
 }
-#pauseText{ font-weight:900; font-size:clamp(22px, 8vw, 56px); letter-spacing:.02em; text-shadow:0 2px 10px rgba(0,0,0,.35); }
-.pause-overlay .start-btn{ font-size:clamp(18px, 6vw, 28px); padding:12px 28px; }
+#pauseText{ font-weight:900; font-size:clamp(22px,8vw,56px); letter-spacing:.02em; text-shadow:0 2px 10px rgba(0,0,0,.35); }
+.pause-overlay .start-btn{ font-size:clamp(18px,6vw,28px); padding:12px 28px; }
 
 /* ランキング（localStorage / TOP5・日付＋NEW） */
-#rankingOverlay {
-  position: fixed; inset: 0; background: rgba(0,0,0,0.7);
-  z-index: 100; display: none; justify-content: center; align-items: center; padding: 12px;
+#rankingOverlay{
+  position:fixed; inset:0; background:rgba(0,0,0,0.7);
+  z-index:100; display:none; justify-content:center; align-items:center; padding:12px;
 }
-.ranking-content {
-  background: rgba(20,20,24,0.95); color: #fff; padding: 14px; border-radius: 12px;
-  width: 92vw; max-width: 580px; display: flex; flex-direction: column; max-height: 80vh; overflow-y: auto;
+.ranking-content{
+  background:rgba(20,20,24,0.95); color:#fff; padding:14px; border-radius:12px;
+  width:92vw; max-width:580px; display:flex; flex-direction:column; max-height:80vh; overflow-y:auto;
 }
-.ranking-content h2 { text-align:center; margin: 4px 0 8px; }
-.lb-list { list-style: none; padding: 0; margin: 0; }
-.lb-list li {
+.ranking-content h2{ text-align:center; margin:4px 0 8px; }
+.lb-list{ list-style:none; padding:0; margin:0; }
+.lb-list li{
   display:flex; gap:8px; align-items:center; justify-content:space-between;
-  background: rgba(255,255,255,0.06); margin:6px 0; padding:8px 10px; border-radius:10px;
+  background:rgba(255,255,255,0.06); margin:6px 0; padding:8px 10px; border-radius:10px;
 }
-.lb-rank { width:2.4em; text-align:center; font-weight:900; }
-.lb-date { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lb-score { min-width:6.5em; text-align:right; font-weight:900; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
-.lb-new { color:#ffde59; font-weight:900; }
+.lb-rank{ width:2.4em; text-align:center; font-weight:900; }
+.lb-date{ flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lb-score{ min-width:6.5em; text-align:right; font-weight:900; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+.lb-new{ color:#ffde59; font-weight:900; }
 
 /* iOS ダブルタップ拡大対策 */
-* { -webkit-tap-highlight-color: transparent; }
-img, .cell, button { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
-#board, .cell { touch-action: none; }
+*{ -webkit-tap-highlight-color:transparent; }
+img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-drag:none; -webkit-touch-callout:none; }
+#board, .cell{ touch-action:none; }
 </style>
 </head>
 <body>
 <div class="wrap">
 
-  <!-- 上：SCORE / TIME / START -->
+  <!-- SCORE / TIME / START -->
   <div class="header">
     <div class="panel">SCORE <span id="score">0</span></div>
     <div class="panel">TIME <span id="time">60</span>s</div>
     <button id="startBtn" class="start-btn">START</button>
   </div>
 
-  <!-- ゲーム盤面 -->
+  <!-- 盤面 -->
   <div id="boardWrap">
     <div id="board" class="board"></div>
 
@@ -104,19 +119,6 @@ img, .cell, button { -webkit-user-select: none; user-select: none; -webkit-user-
 
     <!-- 結果 -->
     <div id="gameOverOverlay"></div>
-  </div>
-
-  <!-- ルール -->
-  <div class="rules">
-    <table>
-      <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
-      <tbody>
-        <tr><td>3個消し</td><td>100点</td></tr>
-        <tr><td>4個消し</td><td>300点</td></tr>
-        <tr><td>5個消し</td><td>500点</td></tr>
-        <tr><td colspan="2">2コンボ目は得点2倍、3コンボ目は得点3倍...（最大10倍）</td></tr>
-      </tbody>
-    </table>
   </div>
 
   <!-- 下：アイコン -->
@@ -149,14 +151,10 @@ img, .cell, button { -webkit-user-select: none; user-select: none; -webkit-user-
 
 <script>
 /* ===== iOSダブルタップ拡大対策＆スクロール阻止 ===== */
-let __lastTouchEnd = 0;
-document.addEventListener('touchend', (e) => {
-  const now = Date.now();
-  if (now - __lastTouchEnd <= 350) e.preventDefault();
-  __lastTouchEnd = now;
-}, { passive: false });
-document.addEventListener('dblclick', (e) => e.preventDefault(), { passive:false });
-document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+let __lastTouchEnd=0;
+document.addEventListener('touchend',e=>{const now=Date.now(); if(now-__lastTouchEnd<=350)e.preventDefault(); __lastTouchEnd=now;},{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
+document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 
 /* ===== ゲーム本体 ===== */
 const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
@@ -266,12 +264,12 @@ function renderBoard(prevBoard){
       const img=document.createElement('img');
       img.src=`tile${t}.png`;
       if(prevBoard && prevBoard[i]===0){
-        img.style.opacity = '0';
-        img.style.transform = 'translateY(-120%)';
-        requestAnimationFrame(() => {
-          img.style.transition = 'transform 0.4s cubic-bezier(.3,.7,.4,1), opacity 0.4s ease';
-          img.style.transform = 'translateY(0)';
-          img.style.opacity = '1';
+        img.style.opacity='0';
+        img.style.transform='translateY(-120%)';
+        requestAnimationFrame(()=>{
+          img.style.transition='transform 0.4s cubic-bezier(.3,.7,.4,1), opacity 0.4s ease';
+          img.style.transform='translateY(0)';
+          img.style.opacity='1';
         });
       }
       cell.appendChild(img);
@@ -314,69 +312,63 @@ function updateUI(){
 }
 
 /* ===== ローカルランキング（TOP5：日付＋NEW／自動登録） ===== */
-const TOP_LIMIT = 5;
-const KEY_LB   = 'm3_local_lb_v2';
-let lastNewTs = null;
+const TOP_LIMIT=5;
+const KEY_LB='m3_local_lb_v2';
+let lastNewTs=null;
 
-function getLB(){
-  try { return JSON.parse(localStorage.getItem(KEY_LB) || '[]'); }
-  catch { return []; }
-}
+function getLB(){ try{ return JSON.parse(localStorage.getItem(KEY_LB)||'[]'); }catch{ return []; } }
 function saveLB(list){ localStorage.setItem(KEY_LB, JSON.stringify(list)); }
 function insertScoreAuto(scoreVal){
-  const d = new Date();
-  const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
-  const entry = { score: Number(scoreVal)||0, date: dateStr, ts: d.toISOString() };
-  const lb = getLB();
+  const d=new Date();
+  const dateStr=`${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  const entry={ score:Number(scoreVal)||0, date:dateStr, ts:d.toISOString() };
+  const lb=getLB();
   lb.push(entry);
-  lb.sort((a,b)=> b.score - a.score || new Date(a.ts) - new Date(b.ts));
-  const cut = lb.slice(0, TOP_LIMIT);
+  lb.sort((a,b)=> b.score-a.score || new Date(a.ts)-new Date(b.ts));
+  const cut=lb.slice(0,TOP_LIMIT);
   saveLB(cut);
   return entry.ts;
 }
 function renderLB(){
-  const listEl = document.getElementById('rankingList');
-  const emptyEl = document.getElementById('lbEmpty');
-  const lb = getLB();
-  listEl.innerHTML = '';
-  if(lb.length === 0){ emptyEl.style.display='block'; return; }
+  const listEl=document.getElementById('rankingList');
+  const emptyEl=document.getElementById('lbEmpty');
+  const lb=getLB();
+  listEl.innerHTML='';
+  if(lb.length===0){ emptyEl.style.display='block'; return; }
   emptyEl.style.display='none';
   lb.forEach((r,i)=>{
     const li=document.createElement('li');
-    const isNew = (lastNewTs && r.ts === lastNewTs);
-    li.innerHTML = `
+    const isNew=(lastNewTs && r.ts===lastNewTs);
+    li.innerHTML=`
       <span class="lb-rank">${i+1}</span>
       <span class="lb-date">${r.date}</span>
-      <span class="lb-score">${isNew?'<span class="lb-new">NEW</span>':''}${Number(r.score).toLocaleString()}</span>
-    `;
+      <span class="lb-score">${isNew?'<span class="lb-new">NEW</span>':''}${Number(r.score).toLocaleString()}</span>`;
     listEl.appendChild(li);
   });
 }
 function isTopLocal(sc){
-  const lb = getLB();
-  if(lb.length < TOP_LIMIT) return sc > 0;
-  return Number(sc) >= Number(lb[lb.length-1]?.score ?? -Infinity);
+  const lb=getLB();
+  if(lb.length<TOP_LIMIT) return sc>0;
+  return Number(sc)>=Number(lb[lb.length-1]?.score ?? -Infinity);
 }
 
 /* 結果（自動登録＆表示） */
 function showGameOver(){
   bgm.pause();
-  const qualifies = isTopLocal(score);
+  const qualifies=isTopLocal(score);
 
   if(qualifies){
-    lastNewTs = insertScoreAuto(score);
-    // 直接ランキングへ（NEW表示）
+    lastNewTs=insertScoreAuto(score);
     renderLB();
     document.getElementById('rankingOverlay').style.display='flex';
-    // 上部に一時的バナー
-    const content = document.querySelector('#rankingOverlay .ranking-content');
-    const old = content.querySelector('.top5-banner'); if(old) old.remove();
-    const banner = document.createElement('div');
-    banner.className = 'top5-banner';
-    banner.textContent = 'TOP5にランクイン！';
-    banner.style.cssText = 'text-align:center;margin:6px 0 10px;font-weight:900;color:#ffde59;';
+    const content=document.querySelector('#rankingOverlay .ranking-content');
+    const old=content.querySelector('.top5-banner'); if(old) old.remove();
+    const banner=document.createElement('div');
+    banner.className='top5-banner';
+    banner.textContent='TOP5にランクイン！';
+    banner.style.cssText='text-align:center;margin:6px 0 10px;font-weight:900;color:#ffde59;';
     content.insertBefore(banner, content.children[1]);
-    setTimeout(()=> banner.remove(), 2500);
+    setTimeout(()=>banner.remove(),2500);
   }else{
     gameOverOverlay.style.display='flex';
     gameOverOverlay.innerHTML=`
@@ -385,15 +377,14 @@ function showGameOver(){
       <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
         <button id="restartBtn"  class="start-btn">RESTART</button>
         <button id="showLBBtn"   class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">ランキング</button>
-      </div>
-    `;
+      </div>`;
     document.getElementById('restartBtn').onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
     document.getElementById('showLBBtn').onclick=()=>{ document.getElementById('rankingOverlay').style.display='flex'; renderLB(); };
   }
 }
 
 /* === タッチ＆ロジック === */
-function groupMatches(boardArr, indices){
+function groupMatches(boardArr,indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
   for(let i of indices){
@@ -425,12 +416,10 @@ boardEl.addEventListener('touchstart',e=>{
   touchStartIndex=Number(t.dataset.i);
   startX=e.touches[0].clientX; startY=e.touches[0].clientY;
 },{passive:false});
-
 boardEl.addEventListener('touchmove',e=>{
   if(touchStartIndex===null) return;
   e.preventDefault();
 },{passive:false});
-
 boardEl.addEventListener('touchend',async e=>{
   if(touchStartIndex===null||!running||processing){ touchStartIndex=null; return; }
   const dx=e.changedTouches[0].clientX-startX;
@@ -441,8 +430,8 @@ boardEl.addEventListener('touchend',async e=>{
   let targetR=r, targetC=c;
   if(absDx>absDy) targetC += (dx>0?1:-1); else targetR += (dy>0?1:-1);
   if(targetR<0||targetR>=ROWS||targetC<0||targetC>=COLS){ touchStartIndex=null; return; }
-  const targetIndex = idx(targetR,targetC);
-  await playerMove(touchStartIndex, targetIndex);
+  const targetIndex=idx(targetR,targetC);
+  await playerMove(touchStartIndex,targetIndex);
   touchStartIndex=null;
 },{passive:false});
 
@@ -451,74 +440,70 @@ async function playerMove(i1,i2){
   if(!isAdjacent(i1,i2)) return;
   processing=true;
 
-  const newB = swapTiles(board,i1,i2);
-  const initialMatches = findMatches(newB);
-  if(initialMatches.length === 0){
+  const newB=swapTiles(board,i1,i2);
+  const initialMatches=findMatches(newB);
+  if(initialMatches.length===0){
     renderSwapAnimation(i1,i2,false);
     await new Promise(res=>setTimeout(res,350));
-    processing=false;
-    return;
+    processing=false; return;
   }
 
   renderSwapAnimation(i1,i2,true);
-  board = newB;
-  try{ sndClear.currentTime = 0; sndClear.play(); }catch(_){}
+  board=newB;
+  try{ sndClear.currentTime=0; sndClear.play(); }catch(_){}
+  let chain=0;
 
-  let chain = 0;
   while(true){
-    const matches = findMatches(board);
-    if(matches.length === 0) break;
+    const matches=findMatches(board);
+    if(matches.length===0) break;
     chain++;
-    try{ sndClear.currentTime = 0; sndClear.play(); }catch(_){}
-    const groups = groupMatches(board,matches);
-    let gained = 0;
+    try{ sndClear.currentTime=0; sndClear.play(); }catch(_){}
+    const groups=groupMatches(board,matches);
+    let gained=0;
     for(let g of groups){
-      gained += scoreForMatch(g.length) * Math.min(chain, 10);
+      gained+=scoreForMatch(g.length)*Math.min(chain,10);
     }
-    score += gained;
-    combo = Math.min(10, chain);
+    score+=gained; combo=Math.min(10,chain);
 
-    const imgEls = matches.map(i => {
-      const cell = boardEl.querySelector(`.cell[data-i='${i}']`);
-      return cell ? cell.querySelector('img') : null;
+    const imgEls=matches.map(i=>{
+      const cell=boardEl.querySelector(`.cell[data-i='${i}']`);
+      return cell?cell.querySelector('img'):null;
     }).filter(Boolean);
-    imgEls.forEach(img => {
+    imgEls.forEach(img=>{
       img.classList.remove('vanish');
       void img.offsetWidth;
       img.classList.add('vanish');
     });
-    await waitForAnimations(imgEls, 600);
-    matches.forEach(i => board[i] = 0);
+    await waitForAnimations(imgEls,600);
+    matches.forEach(i=>board[i]=0);
 
     // 自然落下
-    const oldCells = Array.from(boardEl.children);
-    const oldRects = oldCells.map(el => el.getBoundingClientRect());
-    const collapsed = collapseBoard(board);
-    board = collapsed;
+    const oldCells=Array.from(boardEl.children);
+    const oldRects=oldCells.map(el=>el.getBoundingClientRect());
+    const collapsed=collapseBoard(board);
+    board=collapsed;
     renderBoard(board);
-    const newCells = Array.from(boardEl.children);
-    const newRects = newCells.map(el => el.getBoundingClientRect());
-    const basePerTile = 120;
-    newCells.forEach((cell, i) => {
-      const old = oldRects[i];
-      const neu = newRects[i];
-      if (!old || !neu) return;
-      const dx = old.left - neu.left;
-      const dy = old.top - neu.top;
-      const tilesMoved = Math.round(Math.abs(dy) / neu.height);
-      const duration = Math.max(100, basePerTile * tilesMoved);
-      if (dy!== 0 || dx!== 0) {
-        cell.style.transform = `translate(${dx}px, ${dy}px)`;
-        cell.style.transition = `transform ${duration}ms cubic-bezier(.25,.8,.5,1)`;
-        requestAnimationFrame(() => { cell.style.transform = ''; });
+    const newCells=Array.from(boardEl.children);
+    const newRects=newCells.map(el=>el.getBoundingClientRect());
+    const basePerTile=120;
+    newCells.forEach((cell,i)=>{
+      const old=oldRects[i], neu=newRects[i];
+      if(!old||!neu) return;
+      const dx=old.left-neu.left, dy=old.top-neu.top;
+      const tilesMoved=Math.round(Math.abs(dy)/neu.height);
+      const duration=Math.max(100,basePerTile*tilesMoved);
+      if(dy!==0||dx!==0){
+        cell.style.transform=`translate(${dx}px, ${dy}px)`;
+        cell.style.transition=`transform ${duration}ms cubic-bezier(.25,.8,.5,1)`;
+        requestAnimationFrame(()=>{ cell.style.transform=''; });
       }
     });
-    const maxTiles = Math.max(...newCells.map((_, i) => {
-      const dy = oldRects[i] ? oldRects[i].top - newRects[i].top : 0;
-      return Math.round(Math.abs(dy) / newRects[i].height);
+    const maxTiles=Math.max(...newCells.map((_,i)=>{
+      const dy=oldRects[i]?oldRects[i].top-newRects[i].top:0;
+      return Math.round(Math.abs(dy)/newRects[i].height);
     }));
-    await new Promise(res => setTimeout(res, basePerTile * maxTiles + 80));
-    newCells.forEach(cell => { cell.style.transition = ''; cell.style.transform = ''; });
+    await new Promise(res=>setTimeout(res,basePerTile*maxTiles+80));
+    newCells.forEach(cell=>{ cell.style.transition=''; cell.style.transform=''; });
   }
 
   updateUI();
@@ -526,37 +511,33 @@ async function playerMove(i1,i2){
 }
 
 function renderSwapAnimation(i1,i2,success){
-  const cells = boardEl.children;
-  const cell1 = cells[i1];
-  const cell2 = cells[i2];
-  if(!cell1 || !cell2) return;
-  const pos1 = cell1.getBoundingClientRect();
-  const pos2 = cell2.getBoundingClientRect();
-  const dx = pos2.left - pos1.left;
-  const dy = pos2.top - pos1.top;
-  cell1.style.transition = 'transform 300ms ease';
-  cell2.style.transition = 'transform 300ms ease';
-  cell1.style.transform = `translate(${dx}px,${dy}px)`;
-  cell2.style.transform = `translate(${-dx}px,${-dy}px)`;
-  setTimeout(()=> {
-    cell1.style.transition = ''; cell2.style.transition = '';
-    cell1.style.transform = ''; cell2.style.transform = '';
+  const cells=boardEl.children;
+  const cell1=cells[i1], cell2=cells[i2];
+  if(!cell1||!cell2) return;
+  const pos1=cell1.getBoundingClientRect();
+  const pos2=cell2.getBoundingClientRect();
+  const dx=pos2.left-pos1.left, dy=pos2.top-pos1.top;
+  cell1.style.transition='transform 300ms ease';
+  cell2.style.transition='transform 300ms ease';
+  cell1.style.transform=`translate(${dx}px,${dy}px)`;
+  cell2.style.transform=`translate(${-dx}px,${-dy}px)`;
+  setTimeout(()=>{
+    cell1.style.transition=''; cell2.style.transition='';
+    cell1.style.transform=''; cell2.style.transform='';
     if(!success) renderBoard();
-  }, 300);
+  },300);
 }
 
-function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r1-r2)+Math.abs(c1-c2)===1;}
-function renderBoardInitial(){board=generateBoard(); renderBoard();}
+function isAdjacent(i1,i2){ const [r1,c1]=rc(i1),[r2,c2]=rc(i2); return Math.abs(r1-r2)+Math.abs(c1-c2)===1; }
+function renderBoardInitial(){ board=generateBoard(); renderBoard(); }
 renderBoardInitial(); updateUI();
 
-/* ===== ボタン類 ===== */
-document.getElementById('startBtn').addEventListener('click', startGame);
+/* ===== ボタン ===== */
+document.getElementById('startBtn').addEventListener('click',startGame);
 
-const muteBtn=document.getElementById('muteBtn');
-let muted=false;
+const muteBtn=document.getElementById('muteBtn'); let muted=false;
 muteBtn.addEventListener('click',()=>{
-  muted=!muted;
-  bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
+  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
   muteBtn.textContent=muted?'🔈':'🔇';
 });
 
@@ -580,15 +561,14 @@ resumeBtn.addEventListener('click',()=>{
 });
 
 /* ===== ランキング表示＆RESTART ===== */
-const rankingBtn = document.getElementById('rankingBtn');
-const rankingOverlay = document.getElementById('rankingOverlay');
-const closeRanking = document.getElementById('closeRanking');
-const lbRestartBtn = document.getElementById('lbRestart');
+const rankingBtn=document.getElementById('rankingBtn');
+const rankingOverlay=document.getElementById('rankingOverlay');
+const closeRanking=document.getElementById('closeRanking');
+const lbRestartBtn=document.getElementById('lbRestart');
 
-rankingBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='flex'; renderLB(); });
-closeRanking.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; lastNewTs = null; });
-lbRestartBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; startGame(); });
-
+rankingBtn.addEventListener('click',()=>{ rankingOverlay.style.display='flex'; renderLB(); });
+closeRanking.addEventListener('click',()=>{ rankingOverlay.style.display='none'; lastNewTs=null; });
+lbRestartBtn.addEventListener('click',()=>{ rankingOverlay.style.display='none'; startGame(); });
 </script>
 </body>
 </html>
