@@ -23,10 +23,10 @@ html,body{
   background:rgba(255,255,255,0.06);
   padding:.45rem .7rem;
   border-radius:10px;
-  min-width:0;            /* ← これで縮められる */
-  flex:1 1 auto;          /* ← 横幅に合わせて伸縮 */
+  min-width:0;
+  flex:1 1 auto;
   text-align:center;
-  font-size:clamp(12px,3.6vw,18px);  /* ← 小さめに */
+  font-size:clamp(12px,3.6vw,18px);
   font-weight:700; line-height:1.1;
 }
 .start-btn{
@@ -168,6 +168,26 @@ const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
 const bgm=document.getElementById('bgm');
 
+/* ====== 音源まとめ＆ミュート一括反映／音解禁 ====== */
+const AUDIOS=[bgm, sndClear, sndStart];
+let muted=false;
+function updateMuteState(){ AUDIOS.forEach(a=>{ a.muted = muted; }); }
+updateMuteState();
+
+// 初回タップで音の自動再生を許可（iOS対策）
+function unlockAudioOnce(){
+  AUDIOS.forEach(a=>{
+    a.muted = muted;
+    a.play().then(()=>{ a.pause(); a.currentTime=0; }).catch(()=>{});
+  });
+  document.removeEventListener('pointerdown', unlockAudioOnce);
+  document.removeEventListener('touchstart', unlockAudioOnce);
+  document.removeEventListener('click', unlockAudioOnce);
+}
+document.addEventListener('pointerdown', unlockAudioOnce, { once:true, passive:true });
+document.addEventListener('touchstart', unlockAudioOnce, { once:true, passive:true });
+document.addEventListener('click', unlockAudioOnce, { once:true });
+
 bgm.volume=0.2;
 
 function idx(r,c){return r*COLS+c}
@@ -294,6 +314,7 @@ function startGame(){
   document.getElementById('rankingOverlay').style.display='none';
   gameOverOverlay.style.display='none';
 
+  updateMuteState();                // 音状態を反映
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
   running=true; updateUI(); renderBoard();
@@ -535,9 +556,9 @@ renderBoardInitial(); updateUI();
 /* ===== ボタン ===== */
 document.getElementById('startBtn').addEventListener('click',startGame);
 
-const muteBtn=document.getElementById('muteBtn'); let muted=false;
+const muteBtn=document.getElementById('muteBtn');
 muteBtn.addEventListener('click',()=>{
-  muted=!muted; bgm.muted=muted; sndClear.muted=muted; sndStart.muted=muted;
+  muted=!muted; updateMuteState();
   muteBtn.textContent=muted?'🔈':'🔇';
 });
 
@@ -552,6 +573,7 @@ pauseBtn.addEventListener('click',()=>{
 });
 resumeBtn.addEventListener('click',()=>{
   running=true; pauseOverlay.style.display='none';
+  updateMuteState();
   bgm.play().catch(()=>{});
   timerId=setInterval(()=>{
     timeLeft--;
