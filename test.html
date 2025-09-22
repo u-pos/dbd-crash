@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
       content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>DBDクラッシュ（ローカルTOP5／名前なし）</title>
+<title>【ポスゲー】DBDクラッシュ</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
 html,body{
@@ -122,20 +122,24 @@ img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-dra
   </div>
 
   <!-- 下：アイコン -->
+ 
+  <span style="color:yellow;">【ルール説明】</span>
+  <footer class="footer">3つ以上つないでコンボを狙おう！3つ消し：100点、4つ消し：300点、5つ消し：500点！コンボ数に応じて加算される点数が倍増するぞ！</footer>
+
+  <!-- 下部アイコン -->
   <div class="bottom-buttons">
     <button id="muteBtn" class="icon-btn" title="ミュート切替">🔇</button>
     <button id="pauseBtn" class="icon-btn" title="一時停止">⏸</button>
     <button id="rankingBtn" class="icon-btn" title="ローカルランキング">🏆</button>
   </div>
 </div>
-
 <!-- ランキング（localStorage／TOP5：日付＋NEW） -->
 <div id="rankingOverlay">
   <div class="ranking-content">
     <div style="display:flex; justify-content:flex-end;">
-      <button id="closeRanking" class="icon-btn" style="font-size:2rem;">✖</button>
+      <button id="closeRanking" class="icon-btn" style="font-size:3rem;">✖</button>
     </div>
-    <h2>🏆 ローカルランキング TOP5</h2>
+    <h2>ローカルランキング TOP5</h2>
     <ol id="rankingList" class="lb-list"></ol>
     <div id="lbEmpty" style="opacity:.7; text-align:center; padding:8px; display:none;">まだ記録がありません</div>
     <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
