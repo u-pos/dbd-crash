@@ -4,7 +4,7 @@
 <meta charset="utf-8" />
 <meta name="viewport"
       content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no"/>
-<title>DBDクラッシュ</title>
+<title>DBDクラッシュ（ローカルTOP5／名前なし）</title>
 <style>
 :root { --cols:8; --rows:8; --tile-size:11vw; }
 html,body {
@@ -12,10 +12,14 @@ html,body {
   overflow:hidden; overscroll-behavior:none;
   background:#111; color:#fff; font-family:sans-serif;
 }
-.wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; }
-.header { display:flex; justify-content:space-between; align-items:center; margin-bottom:1.5vw; font-size:3.6vw; font-weight:600; width:94%; max-width:720px; }
-.panel { background:rgba(255,255,255,0.04); padding:0.8vw 1.5vw; border-radius:12px; min-width:28vw; text-align:center; }
-#combo {color:#ffde59;font-weight:900;font-size:3.5vw;}
+.wrap { width:100%; height:100%; display:flex; flex-direction:column; align-items:center; gap:0.6rem; }
+
+/* 上部（SCORE/TIME/START） */
+.header { display:flex; justify-content:space-between; align-items:center; gap:.6rem; width:94%; max-width:720px; }
+.panel { background:rgba(255,255,255,0.06); padding:.6rem .9rem; border-radius:12px; min-width:28vw; text-align:center; font-size:4.2vw; font-weight:700; }
+.start-btn { background:#2563eb; border:none; color:#fff; font-weight:900; font-size:4.5vw; padding:.7rem 1.2rem; border-radius:999px; }
+
+/* 盤面 */
 #boardWrap { position:relative; width:94%; max-width:720px; }
 .board {background:linear-gradient(180deg,rgba(255,255,255,0.03),transparent);padding:6px;border-radius:10px;
 display:grid;grid-template-columns:repeat(var(--cols),var(--tile-size));gap:4px;touch-action:none;box-sizing:border-box;margin:0 auto;}
@@ -24,46 +28,35 @@ display:flex;align-items:center;justify-content:center;}
 .cell img {width:100%;height:100%;object-fit:cover;pointer-events:none;}
 @keyframes vanish {0%{transform:scale(1);opacity:1;}50%{transform:scale(1.25);opacity:0.6;}100%{transform:scale(0);opacity:0;}}
 .vanish {animation:vanish 180ms cubic-bezier(.2,.9,.3,1) forwards;}
-.start-overlay,#gameOverOverlay {
-  position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
-  background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;
-}
-.start-btn {background:linear-gradient(90deg,#ff7ab6,#7b61ff);border:none;
-padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer;}
-#gameOverOverlay {font-size:10vw;font-weight:900;flex-wrap:wrap;gap:1vw;text-align:center;display:none;}
-.bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.8rem;}
-.icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
-.rules-table-fixed {margin-top:0.8rem;font-size:0.9rem;width:94%;max-width:720px;}
-.rules-table-fixed table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
-.rules-table-fixed th,.rules-table-fixed td {border-bottom:1px solid #555;padding:0.35rem;}
-.rules-table-fixed th {border-bottom:2px solid #ffde59;}
 
-/* ▶ 一時停止オーバーレイ（可変サイズ） */
+/* 結果 */
+#gameOverOverlay {
+  position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+  background:rgba(0,0,0,0.35);border-radius:10px;flex-direction:column;z-index:10;
+  font-size:10vw;font-weight:900;gap:1vw;text-align:center;
+}
+
+/* ルール */
+.rules {margin-top:.4rem; font-size:.95rem; width:94%; max-width:720px;}
+.rules table {width:100%;color:#fff;border-collapse:collapse;text-align:center;}
+.rules th,.rules td {border-bottom:1px solid #555;padding:0.35rem;}
+.rules th {border-bottom:2px solid #ffde59;}
+
+/* 下部アイコン */
+.bottom-buttons {display:flex;justify-content:center;align-items:center;gap:1.5rem;margin-top:0.6rem;}
+.icon-btn {background:none;border:none;font-size:2.8rem;color:white;cursor:pointer;}
+
+/* 一時停止（全画面） */
 .pause-overlay{
-  position: fixed;      /* ← absolute から fixed に */
-  inset: 0;             /* 画面全体を覆う */
-  width: 100vw;
-  height: 100dvh;       /* モバイルのアドレスバー変動にも追従 */
-  display: none;
-  align-items: center;
-  justify-content: center;
-  background: black;
-  z-index: 20;
-  flex-direction: column;
-  color: white;
-  border-radius: 0;     /* 角丸をなくして隙間ゼロに */
-  gap: 16px;
-  padding: 16px;
+  position: fixed; inset: 0; width: 100vw; height: 100dvh;
+  display: none; align-items: center; justify-content: center;
+  background: black; z-index: 20; flex-direction: column; color: white;
+  border-radius: 0; gap: 16px; padding: 16px;
 }
-#pauseText{
-  font-weight:900;
-  font-size:clamp(22px, 8vw, 56px);
-  letter-spacing:.02em;
-  text-shadow:0 2px 10px rgba(0,0,0,.35);
-}
+#pauseText{ font-weight:900; font-size:clamp(22px, 8vw, 56px); letter-spacing:.02em; text-shadow:0 2px 10px rgba(0,0,0,.35); }
 .pause-overlay .start-btn{ font-size:clamp(18px, 6vw, 28px); padding:12px 28px; }
 
-/* ランキング（localStorage / TOP5） */
+/* ランキング（localStorage / TOP5・日付＋NEW） */
 #rankingOverlay {
   position: fixed; inset: 0; background: rgba(0,0,0,0.7);
   z-index: 100; display: none; justify-content: center; align-items: center; padding: 12px;
@@ -79,26 +72,29 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
   background: rgba(255,255,255,0.06); margin:6px 0; padding:8px 10px; border-radius:10px;
 }
 .lb-rank { width:2.4em; text-align:center; font-weight:900; }
-.lb-name { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-.lb-score { min-width:5em; text-align:right; font-weight:900; }
-.lb-time  { opacity:.7; font-size:12px; margin-left:8px; }
+.lb-date { flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.lb-score { min-width:6.5em; text-align:right; font-weight:900; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
+.lb-new { color:#ffde59; font-weight:900; }
+
+/* iOS ダブルタップ拡大対策 */
+* { -webkit-tap-highlight-color: transparent; }
+img, .cell, button { -webkit-user-select: none; user-select: none; -webkit-user-drag: none; -webkit-touch-callout: none; }
+#board, .cell { touch-action: none; }
 </style>
 </head>
 <body>
 <div class="wrap">
+
+  <!-- 上：SCORE / TIME / START -->
   <div class="header">
-    <div class="panel">Score: <span id="score">0</span></div>
-    <div class="panel">残り <span id="time">60</span> 秒</div>
-    <div class="panel"><span id="combo"></span></div>
+    <div class="panel">SCORE <span id="score">0</span></div>
+    <div class="panel">TIME <span id="time">60</span>s</div>
+    <button id="startBtn" class="start-btn">START</button>
   </div>
 
+  <!-- ゲーム盤面 -->
   <div id="boardWrap">
     <div id="board" class="board"></div>
-
-    <!-- スタート -->
-    <div id="overlay" class="start-overlay">
-      <button id="startBtn" class="start-btn">START</button>
-    </div>
 
     <!-- 一時停止 -->
     <div id="pauseOverlay" class="pause-overlay">
@@ -110,13 +106,8 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
     <div id="gameOverOverlay"></div>
   </div>
 
-  <div class="bottom-buttons">
-    <button id="muteBtn" class="icon-btn" title="ミュート切替">🔇</button>
-    <button id="pauseBtn" class="icon-btn" title="一時停止">⏸</button>
-    <button id="rankingBtn" class="icon-btn" title="ローカルランキング">🏆</button>
-  </div>
-
-  <div class="rules-table-fixed">
+  <!-- ルール -->
+  <div class="rules">
     <table>
       <thead><tr><th>得点ルール</th><th>内容</th></tr></thead>
       <tbody>
@@ -127,18 +118,24 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
       </tbody>
     </table>
   </div>
+
+  <!-- 下：アイコン -->
+  <div class="bottom-buttons">
+    <button id="muteBtn" class="icon-btn" title="ミュート切替">🔇</button>
+    <button id="pauseBtn" class="icon-btn" title="一時停止">⏸</button>
+    <button id="rankingBtn" class="icon-btn" title="ローカルランキング">🏆</button>
+  </div>
 </div>
 
-<!-- ランキング（localStorage／TOP5） -->
+<!-- ランキング（localStorage／TOP5：日付＋NEW） -->
 <div id="rankingOverlay">
   <div class="ranking-content">
     <div style="display:flex; justify-content:flex-end;">
       <button id="closeRanking" class="icon-btn" style="font-size:2rem;">✖</button>
     </div>
-    <h2>🏆自己ランキング🏆</h2>
+    <h2>🏆 ローカルランキング TOP5</h2>
     <ol id="rankingList" class="lb-list"></ol>
     <div id="lbEmpty" style="opacity:.7; text-align:center; padding:8px; display:none;">まだ記録がありません</div>
-    <!-- ★ここを追加：ランキング表示中でも即RESTART可能に -->
     <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
       <button id="lbRestart" class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">RESTART</button>
     </div>
@@ -151,15 +148,23 @@ padding:14px 26px;border-radius:999px;font-size:1.8rem;color:#fff;cursor:pointer
 <audio id="bgm" src="bgm2.mp3" preload="auto" loop></audio>
 
 <script>
-// ===== ゲーム（オフライン） =====
+/* ===== iOSダブルタップ拡大対策＆スクロール阻止 ===== */
+let __lastTouchEnd = 0;
+document.addEventListener('touchend', (e) => {
+  const now = Date.now();
+  if (now - __lastTouchEnd <= 350) e.preventDefault();
+  __lastTouchEnd = now;
+}, { passive: false });
+document.addEventListener('dblclick', (e) => e.preventDefault(), { passive:false });
+document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
+
+/* ===== ゲーム本体 ===== */
 const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
 let board=[],running=false,score=0,timeLeft=GAME_TIME,timerId,combo=1,processing=false;
 
 const boardEl=document.getElementById('board');
 const scoreEl=document.getElementById('score');
 const timeEl=document.getElementById('time');
-const comboEl=document.getElementById('combo');
-const overlay=document.getElementById('overlay');
 const gameOverOverlay=document.getElementById('gameOverOverlay');
 const sndStart=document.getElementById('sndStart');
 const sndClear=document.getElementById('sndClear');
@@ -286,15 +291,16 @@ function waitForAnimations(elements,timeout=800){
   });
 }
 
+/* ゲーム開始 */
 function startGame(){
-  overlay.style.display='none';
-  gameOverOverlay.style.display='none';
   document.getElementById('rankingOverlay').style.display='none';
+  gameOverOverlay.style.display='none';
 
   bgm.currentTime=0; bgm.play().catch(()=>{});
   board=generateBoard(); score=0; timeLeft=GAME_TIME; combo=1; processing=false;
   running=true; updateUI(); renderBoard();
   try{ sndStart.currentTime=0; sndStart.play(); }catch(_){}
+  clearInterval(timerId);
   timerId=setInterval(()=>{
     timeLeft--;
     if(timeLeft<=0){ clearInterval(timerId); running=false; showGameOver(); }
@@ -305,47 +311,43 @@ function startGame(){
 function updateUI(){
   scoreEl.textContent=score;
   timeEl.textContent=timeLeft;
-  comboEl.textContent=combo>1?`${combo}コンボ！`:'';
 }
 
-/* === ローカルランキング（TOP5） === */
+/* ===== ローカルランキング（TOP5：日付＋NEW／自動登録） ===== */
 const TOP_LIMIT = 5;
-const KEY_LB   = 'm3_local_lb_v1';
-const KEY_NAME = 'm3_last_name';
+const KEY_LB   = 'm3_local_lb_v2';
+let lastNewTs = null;
 
 function getLB(){
   try { return JSON.parse(localStorage.getItem(KEY_LB) || '[]'); }
   catch { return []; }
 }
-function saveLB(list){
-  localStorage.setItem(KEY_LB, JSON.stringify(list));
-}
-function insertScore(name,score){
-  const entry = { name: (name||'').trim() || '名無しさん', score: Number(score)||0, ts: new Date().toISOString() };
+function saveLB(list){ localStorage.setItem(KEY_LB, JSON.stringify(list)); }
+function insertScoreAuto(scoreVal){
+  const d = new Date();
+  const dateStr = `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')}`;
+  const entry = { score: Number(scoreVal)||0, date: dateStr, ts: d.toISOString() };
   const lb = getLB();
   lb.push(entry);
-  lb.sort((a,b)=> b.score - a.score || new Date(a.ts) - new Date(b.ts)); // 高得点優先、同点は古い方が上
+  lb.sort((a,b)=> b.score - a.score || new Date(a.ts) - new Date(b.ts));
   const cut = lb.slice(0, TOP_LIMIT);
   saveLB(cut);
-  return cut.findIndex(x => x === entry);
+  return entry.ts;
 }
 function renderLB(){
   const listEl = document.getElementById('rankingList');
   const emptyEl = document.getElementById('lbEmpty');
   const lb = getLB();
   listEl.innerHTML = '';
-  if(lb.length === 0){
-    emptyEl.style.display = 'block';
-    return;
-  }
-  emptyEl.style.display = 'none';
-  lb.forEach((r, i) => {
-    const li = document.createElement('li');
+  if(lb.length === 0){ emptyEl.style.display='block'; return; }
+  emptyEl.style.display='none';
+  lb.forEach((r,i)=>{
+    const li=document.createElement('li');
+    const isNew = (lastNewTs && r.ts === lastNewTs);
     li.innerHTML = `
       <span class="lb-rank">${i+1}</span>
-      <span class="lb-name">${esc(r.name)}</span>
-      <span class="lb-score">${Number(r.score).toLocaleString()}</span>
-      <span class="lb-time">${fmtDate(r.ts)}</span>
+      <span class="lb-date">${r.date}</span>
+      <span class="lb-score">${isNew?'<span class="lb-new">NEW</span>':''}${Number(r.score).toLocaleString()}</span>
     `;
     listEl.appendChild(li);
   });
@@ -355,45 +357,34 @@ function isTopLocal(sc){
   if(lb.length < TOP_LIMIT) return sc > 0;
   return Number(sc) >= Number(lb[lb.length-1]?.score ?? -Infinity);
 }
-function esc(s){ return (s||'').replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[c])); }
-function fmtDate(iso){ try{ const d=new Date(iso); return `${d.getFullYear()}/${String(d.getMonth()+1).padStart(2,'0')}/${String(d.getDate()).padStart(2,'0')} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}` }catch{ return '' } }
 
-// 結果表示（ローカルTOP5判定＆登録）
+/* 結果（自動登録＆表示） */
 function showGameOver(){
   bgm.pause();
   const qualifies = isTopLocal(score);
-  const lastName = localStorage.getItem(KEY_NAME) || '';
 
-  gameOverOverlay.style.display='flex';
   if(qualifies){
-    gameOverOverlay.innerHTML=`
-      <div style="font-size:5vw;color:#ffde59;margin-bottom:0.5rem;">🎉 TOP5にランクイン！ 🎉</div>
-      <div>最終スコア</div>
-      <div style="font-size:15vw; font-weight:900;">${score}</div>
-      <input type="text" id="playerName" maxlength="16" placeholder="名前（未入力で『名無しさん』）" value="${esc(lastName)}"
-             style="font-size:5vw;padding:8px 10px;margin:1rem 0;border-radius:10px;border:none;outline:none;"/>
-      <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center;">
-        <button id="saveNameBtn" class="start-btn">登録</button>
-        <button id="restartBtn"  class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">RESTART</button>
-      </div>
-    `;
-    document.getElementById('restartBtn').onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
-    document.getElementById('saveNameBtn').onclick=()=>{
-      const name = document.getElementById('playerName').value.trim();
-      localStorage.setItem(KEY_NAME, name);
-      insertScore(name, score);
-      // 登録後：ランキングを表示しつつ、そこからも即RESTART可能
-      gameOverOverlay.style.display='none';
-      document.getElementById('rankingOverlay').style.display='flex';
-      renderLB();
-    };
+    lastNewTs = insertScoreAuto(score);
+    // 直接ランキングへ（NEW表示）
+    renderLB();
+    document.getElementById('rankingOverlay').style.display='flex';
+    // 上部に一時的バナー
+    const content = document.querySelector('#rankingOverlay .ranking-content');
+    const old = content.querySelector('.top5-banner'); if(old) old.remove();
+    const banner = document.createElement('div');
+    banner.className = 'top5-banner';
+    banner.textContent = 'TOP5にランクイン！';
+    banner.style.cssText = 'text-align:center;margin:6px 0 10px;font-weight:900;color:#ffde59;';
+    content.insertBefore(banner, content.children[1]);
+    setTimeout(()=> banner.remove(), 2500);
   }else{
+    gameOverOverlay.style.display='flex';
     gameOverOverlay.innerHTML=`
       <div>最終スコア</div>
       <div style="font-size:15vw; font-weight:900;">${score}</div>
       <div style="display:flex; gap:10px; flex-wrap:wrap; justify-content:center; margin-top:8px;">
         <button id="restartBtn"  class="start-btn">RESTART</button>
-        <button id="showLBBtn"  class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">ランキング</button>
+        <button id="showLBBtn"   class="start-btn" style="background:linear-gradient(90deg,#7b61ff,#3cd3ad);">ランキング</button>
       </div>
     `;
     document.getElementById('restartBtn').onclick=()=>{ startGame(); gameOverOverlay.style.display='none'; };
@@ -401,7 +392,7 @@ function showGameOver(){
   }
 }
 
-/* === タッチ操作 & ロジック === */
+/* === タッチ＆ロジック === */
 function groupMatches(boardArr, indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -472,8 +463,8 @@ async function playerMove(i1,i2){
   renderSwapAnimation(i1,i2,true);
   board = newB;
   try{ sndClear.currentTime = 0; sndClear.play(); }catch(_){}
-  let chain = 0;
 
+  let chain = 0;
   while(true){
     const matches = findMatches(board);
     if(matches.length === 0) break;
@@ -558,8 +549,8 @@ function isAdjacent(i1,i2){const [r1,c1]=rc(i1),[r2,c2]=rc(i2);return Math.abs(r
 function renderBoardInitial(){board=generateBoard(); renderBoard();}
 renderBoardInitial(); updateUI();
 
-/* ボタン */
-document.getElementById('startBtn').addEventListener('click',startGame);
+/* ===== ボタン類 ===== */
+document.getElementById('startBtn').addEventListener('click', startGame);
 
 const muteBtn=document.getElementById('muteBtn');
 let muted=false;
@@ -572,7 +563,6 @@ muteBtn.addEventListener('click',()=>{
 const pauseOverlay=document.getElementById('pauseOverlay');
 const pauseBtn=document.getElementById('pauseBtn');
 const resumeBtn=document.getElementById('resumeBtn');
-
 pauseBtn.addEventListener('click',()=>{
   if(!running) return;
   clearInterval(timerId); running=false; bgm.pause();
@@ -589,18 +579,16 @@ resumeBtn.addEventListener('click',()=>{
   },1000);
 });
 
-/* ランキング表示（TOP5）＋RESTART */
+/* ===== ランキング表示＆RESTART ===== */
 const rankingBtn = document.getElementById('rankingBtn');
 const rankingOverlay = document.getElementById('rankingOverlay');
 const closeRanking = document.getElementById('closeRanking');
 const lbRestartBtn = document.getElementById('lbRestart');
 
 rankingBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='flex'; renderLB(); });
-closeRanking.addEventListener('click', ()=> rankingOverlay.style.display='none');
+closeRanking.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; lastNewTs = null; });
 lbRestartBtn.addEventListener('click', ()=>{ rankingOverlay.style.display='none'; startGame(); });
 
-/* iOS対策：スクロール阻止 */
-document.addEventListener('touchmove', e=>e.preventDefault(), {passive:false});
 </script>
 </body>
 </html>
