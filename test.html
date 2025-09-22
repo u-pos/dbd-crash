@@ -91,7 +91,7 @@ html,body{
 .lb-score{ min-width:6.5em; text-align:right; font-weight:900; display:flex; gap:6px; align-items:center; justify-content:flex-end; }
 .lb-new{ color:#ffde59; font-weight:900; }
 
-/* iOS ダブルタップ拡大対策 */
+/* iOS ダブルタップ拡大対策（board限定） */
 *{ -webkit-tap-highlight-color:transparent; }
 img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-drag:none; -webkit-touch-callout:none; }
 #board, .cell{ touch-action:none; }
@@ -153,11 +153,8 @@ img, .cell, button{ -webkit-user-select:none; user-select:none; -webkit-user-dra
 <audio id="bgm" preload="auto" loop playsinline src="bgm2.mp3"></audio>
 
 <script>
-/* ===== スクロール・ダブルタップ拡大阻止 ===== */
-let __lastTouchEnd=0;
-document.addEventListener('touchend',e=>{const now=Date.now(); if(now-__lastTouchEnd<=350)e.preventDefault(); __lastTouchEnd=now;},{passive:false});
-document.addEventListener('dblclick',e=>e.preventDefault(),{passive:false});
-document.addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
+/* ===== ブラウザのズーム対策（ダブルクリックだけ潰す） ===== */
+document.addEventListener('dblclick', e=>e.preventDefault(), {passive:false});
 
 /* ===== ゲーム本体 ===== */
 const ROWS=8, COLS=8, TILE_TYPES=6, GAME_TIME=60;
@@ -450,7 +447,52 @@ function showGameOver(){
   }
 }
 
-/* ==== タッチ＆ロジック ==== */
+/* ===== Pointer入力（タップ/スワイプ共通化） ===== */
+let startIndex = null, startX = 0, startY = 0, activeId = null;
+
+boardEl.addEventListener('pointerdown', (e)=>{
+  if(!running || processing) return;
+  const t = e.target.closest('.cell'); if(!t) return;
+
+  activeId = e.pointerId;
+  boardEl.setPointerCapture(activeId);
+
+  startIndex = Number(t.dataset.i);
+  startX = e.clientX;
+  startY = e.clientY;
+});
+
+boardEl.addEventListener('pointermove', (e)=>{
+  if(activeId !== e.pointerId) return;
+  e.preventDefault(); // スクロール阻止
+});
+
+boardEl.addEventListener('pointerup', async (e)=>{
+  if(activeId !== e.pointerId){ return; }
+  const dx = e.clientX - startX;
+  const dy = e.clientY - startY;
+
+  const absDx = Math.abs(dx), absDy = Math.abs(dy);
+  if(startIndex !== null && Math.max(absDx,absDy) >= 20){
+    const [r,c] = rc(startIndex);
+    let targetR = r, targetC = c;
+    if(absDx > absDy) targetC += (dx > 0 ? 1 : -1);
+    else              targetR += (dy > 0 ? 1 : -1);
+
+    if(targetR>=0 && targetR<ROWS && targetC>=0 && targetC<COLS){
+      const targetIndex = idx(targetR,targetC);
+      await playerMove(startIndex, targetIndex);
+    }
+  }
+  try{ boardEl.releasePointerCapture(activeId); }catch(_){}
+  activeId = null; startIndex = null;
+});
+
+boardEl.addEventListener('pointercancel', ()=>{
+  activeId = null; startIndex = null;
+});
+
+/* ===== マッチ処理 ===== */
 function groupMatches(boardArr,indices){
   const adj={}; indices.forEach(i=>adj[i]=[]);
   const dirs=[[1,0],[-1,0],[0,1],[0,-1]];
@@ -476,32 +518,6 @@ function groupMatches(boardArr,indices){
   return groups;
 }
 
-let touchStartIndex=null,startX=0,startY=0;
-boardEl.addEventListener('touchstart',e=>{
-  if(!running||processing) return;
-  const t=e.target.closest('.cell'); if(!t) return;
-  touchStartIndex=Number(t.dataset.i);
-  startX=e.touches[0].clientX; startY=e.touches[0].clientY;
-},{passive:false});
-boardEl.addEventListener('touchmove',e=>{
-  if(touchStartIndex===null) return;
-  e.preventDefault();
-},{passive:false});
-boardEl.addEventListener('touchend',async e=>{
-  if(touchStartIndex===null||!running||processing){ touchStartIndex=null; return; }
-  const dx=e.changedTouches[0].clientX-startX;
-  const dy=e.changedTouches[0].clientY-startY;
-  const absDx=Math.abs(dx), absDy=Math.abs(dy);
-  if(Math.max(absDx,absDy) < 20){ touchStartIndex=null; return; }
-  const [r,c]=rc(touchStartIndex);
-  let targetR=r, targetC=c;
-  if(absDx>absDy) targetC += (dx>0?1:-1); else targetR += (dy>0?1:-1);
-  if(targetR<0||targetR>=ROWS||targetC<0||targetC>=COLS){ touchStartIndex=null; return; }
-  const targetIndex=idx(targetR,targetC);
-  await playerMove(touchStartIndex,targetIndex);
-  touchStartIndex=null;
-},{passive:false});
-
 async function playerMove(i1,i2){
   if(!running||processing) return;
   if(!isAdjacent(i1,i2)) return;
@@ -517,14 +533,14 @@ async function playerMove(i1,i2){
 
   renderSwapAnimation(i1,i2,true);
   board=newB;
-  playClear(); // ← 取りこぼし防止のプール再生
+  playClear(); // 取りこぼし防止のプール再生
   let chain=0;
 
   while(true){
     const matches=findMatches(board);
     if(matches.length===0) break;
     chain++;
-    playClear(); // ← 連鎖中も毎回確実に鳴らす
+    playClear(); // 連鎖中も毎回確実に鳴らす
     const groups=groupMatches(board,matches);
     let gained=0;
     for(let g of groups){
@@ -597,7 +613,7 @@ function isAdjacent(i1,i2){ const [r1,c1]=rc(i1),[r2,c2]=rc(i2); return Math.abs
 function renderBoardInitial(){ board=generateBoard(); renderBoard(); }
 renderBoardInitial(); updateUI();
 
-/* ===== ボタン =====　 */
+/* ===== ボタン ===== */
 document.getElementById('startBtn').addEventListener('click', startGame);
 
 const muteBtn=document.getElementById('muteBtn');
